@@ -1,23 +1,46 @@
-from fastapi import FastAPI
-from app.schemas.response import ResponseError, ResponseSuccess
-# from app.core.logger import logger  # Assuming logger exists and is configured
-# from app.api.v1.endpoints.user import router as user_router
+from fastapi import FastAPI, Request
+from contextlib import asynccontextmanager
+from app.schemas.response import ResponseError, ResponseModel, ResponseSuccess, ErrorDetail
 from app.api.v1.endpoints.auth import router as auth_router
 from datetime import datetime
-from fastapi.responses import JSONResponse
 from app.utils.response_helper import ResponseHelper
+from fastapi.exceptions import RequestValidationError, HTTPException
+from app.utils.get_error_details import get_error_details
+from app.dependencies.database import init_db
+from app.core.config import settings
+from fastapi.middleware.cors import CORSMiddleware
+from app.core.middleware import (LoggingMiddleware, AuthenticationMiddleware, RoutingMiddleware)
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from app.core.exception import (
+    UnauthorizedException,
+    BadRequestException,
+    ForbiddenException,
+    NotFoundException,
+    ServerErrorException,
+    RedirectionException    
+)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        await init_db()
+        yield
+    finally:
+        pass 
+    
 app = FastAPI(
+    lifespan=lifespan,
     responses={
         400: {
-            "model": ResponseError,
+            "model": ResponseModel,
             "description": "Bad Request"
         },
         401: {
-            "model": ResponseError,
+            "model": ResponseModel,
             "description": "Credentials Invalid"
         },
         403: {
-            "model": ResponseError,
+            "model": ResponseModel,
             "description": "Forbidden"
         },
         422: {
@@ -25,28 +48,74 @@ app = FastAPI(
             "description": "Validation Error"
         },
         500: {
-            "model": ResponseError,
+            "model": ResponseModel,
             "description": "Internal Server Error"
         }
     }
 )
 
+# Setup middlewares
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.add_middleware(LoggingMiddleware)
+app.add_middleware(RoutingMiddleware)
+app.add_middleware(AuthenticationMiddleware)
+
+# handle 422 error
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError | ValueError):
+    return ResponseHelper.status(422).json({
+        "message": "Validation Error",
+        "errors": get_error_details(exc)
+    })
+    
+@app.exception_handler(UnauthorizedException)
+async def unauthorized_exception_handler(request: Request, exc: UnauthorizedException):
+    return ResponseHelper.status(401).json({
+        "message": exc.detail  # Menggunakan "message" sebagai kunci respons
+    })
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    # Check for known HTTP exceptions
+    if isinstance(exc, (
+        HTTPException,
+        NotFoundException, 
+        StarletteHTTPException,
+        UnauthorizedException, 
+        BadRequestException, 
+        ForbiddenException, 
+        ServerErrorException, 
+        RedirectionException
+    )):
+        return ResponseHelper.status(exc.status_code).json({
+            "message": exc.detail
+        })
+    # Fallback for any other exceptions
+    return ResponseHelper.status(500).json({
+        "message": "Internal Server Error",
+    })
+
+
 # Include user and auth routes
-# app.include_router(user_router, prefix="/api/v1/users", tags=["users"])
-app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(auth_router, prefix=settings.API_V1 + "auth", tags=["Authentication"])
 
 @app.get("/", response_model=ResponseSuccess)
 async def root():
-   return ResponseHelper.status(203).json({
-        "message": "Welcome to the User API!",
-        "timestamp": datetime.now(),
+   return ResponseHelper.status().json({
+        "message": "Welcome to the User API!"
     })
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        app, 
-        host="0.0.0.0", 
-        port=8000, 
+        "app.main:app", 
+        host=settings.APP_HOST, 
+        port=settings.APP_PORT,
         reload=True
     )

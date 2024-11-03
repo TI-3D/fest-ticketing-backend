@@ -27,16 +27,16 @@ def create_migration(name):
     path = os.path.join(MIGRATIONS_DIR, filename)
     with open(path, "w") as f:
         f.write(
-            "async def upgrade(db):\n"
+            "def upgrade(db):\n"
             "    # TODO: Write upgrade logic here\n"
             "    pass\n\n"
-            "async def downgrade(db):\n"
+            "def downgrade(db):\n"
             "    # TODO: Write downgrade logic here\n"
             "    pass\n"
         )
     print(f"Created migration: {filename}")
 
-async def upgrade_migrations():
+async def upgrade_migrations(run_seed=False):
     db = get_mongo_db()
     if db is None:
         raise RuntimeError("Database connection failed. Cannot proceed with migrations.")
@@ -56,7 +56,10 @@ async def upgrade_migrations():
         else:
             print(f"Migration {migration_name} already applied.")
 
-async def downgrade_migrations():
+    if run_seed:
+        await run_all_seeds()
+
+async def downgrade_migrations(all=False):
     db = get_mongo_db()
     if db is None:
         print("Database connection failed.")
@@ -66,16 +69,26 @@ async def downgrade_migrations():
     migrations = list_migrations()
     migrations.reverse()
 
-    for migration_name in migrations:
-        if migration_name in applied_migrations:
-            print(f"Reverting migration: {migration_name}")
-            migration_module = importlib.import_module(f"database.migrations.{migration_name}")
-            migration_module.downgrade(db)
-            await db["migrations"].delete_one({"version": migration_name})
-            print(f"Migration {migration_name} reverted.")
-            break
+    if all:
+        for migration_name in migrations:
+            if migration_name in applied_migrations:
+                print(f"Reverting migration: {migration_name}")
+                migration_module = importlib.import_module(f"database.migrations.{migration_name}")
+                migration_module.downgrade(db)
+                await db["migrations"].delete_one({"version": migration_name})
+                print(f"Migration {migration_name} reverted.")
+        print("All migrations have been reverted.")
     else:
-        print("No migrations to revert.")
+        for migration_name in migrations:
+            if migration_name in applied_migrations:
+                print(f"Reverting migration: {migration_name}")
+                migration_module = importlib.import_module(f"database.migrations.{migration_name}")
+                migration_module.downgrade(db)
+                await db["migrations"].delete_one({"version": migration_name})
+                print(f"Migration {migration_name} reverted.")
+                break
+        else:
+            print("No migrations to revert.")
 
 async def get_applied_migrations(db):
     applied_migrations = await db["migrations"].find().to_list(length=None)
@@ -147,6 +160,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Database migration and seeding runner")
     parser.add_argument("command", help="Command to run (migrate:create, migrate:upgrade, migrate:down, migrate, seed:run, seed:create)")
     parser.add_argument("--name", help="Name for the new migration or seed (required for migrate:create and seed:create commands)")
+    parser.add_argument("--all", action="store_true", help="Revert all migrations (only for migrate:down command)")
+    parser.add_argument("--seed", action="store_true", help="Run all seeds after migrations (only for migrate:up command)")
 
     args = parser.parse_args()
 
@@ -155,15 +170,22 @@ if __name__ == "__main__":
             print("Error: --name is required for migrate:create command")
         else:
             create_migration(args.name)
-    elif args.command == "migrate:upgrade":
-        asyncio.run(upgrade_migrations())
+    # elif args.command == "migrate:up":
+    #     asyncio.run(upgrade_migrations(run_seed=args.seed))
     elif args.command == "migrate:down":
-        asyncio.run(downgrade_migrations())
-    elif args.command == "migrate":
-        asyncio.run(upgrade_migrations())
+        if args.all:
+            asyncio.run(downgrade_migrations(all=True))
+        else:
+            asyncio.run(downgrade_migrations())
+    elif args.command == "migrate:run":
+        # asyncio.run(upgrade_migrations())
+        if args.seed:
+            asyncio.run(upgrade_migrations(run_seed=True))
+        else:
+            asyncio.run(upgrade_migrations())
     elif args.command == "seed:run":
-        if args.name:
-            ascii.run(run_seed(args.name))
+        if args.seed:
+            asyncio.run(run_seed(args.seed))
         else:
             asyncio.run(run_all_seeds())
     elif args.command == "seed:create":

@@ -23,7 +23,7 @@ def upgrade(db):
         db.create_collection("email_authentications", validator=email_auth_schema)
         db["email_authentications"].create_indexes([
             IndexModel([("email_authentication_id", ASCENDING)], unique=True),
-            IndexModel([("user", ASCENDING)])
+            IndexModel([("user_id", ASCENDING)])
         ])
         print("Collection 'email_authentications' created with validation and indexes.")
     except CollectionInvalid:
@@ -35,7 +35,7 @@ def upgrade(db):
         db.create_collection("google_authentications", validator=google_auth_schema)
         db["google_authentications"].create_indexes([
             IndexModel([("google_authentication_id", ASCENDING)], unique=True),
-            IndexModel([("user", ASCENDING)])
+            IndexModel([("user_id", ASCENDING)])
         ])
         print("Collection 'google_authentications' created with validation and indexes.")
     except CollectionInvalid:

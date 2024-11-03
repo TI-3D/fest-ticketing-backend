@@ -1,7 +1,6 @@
-from beanie import Document
-from pydantic import BaseModel, EmailStr, Field, validator
+from beanie import Document,PydanticObjectId
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List
-from uuid import UUID, uuid4
 from datetime import datetime, date
 from enum import Enum
 
@@ -19,30 +18,28 @@ class Gender(str, Enum):
     FEMALE = "Female"
 
 class User(Document):
-    user_id: UUID = Field(default_factory=uuid4)
+    user_id: PydanticObjectId = Field(default_factory=PydanticObjectId, primary_key=True)
     full_name: str = Field(max_length=255, description="Full name of the user")
     email: EmailStr
     gender: Optional[Gender] = None  
-    birth_date: Optional[date] = None
+    birth_date: Optional[datetime] = None
     phone_number: Optional[str] = Field(None, max_length=16, description="Phone number must be 16 characters or less")
     NIK: Optional[str] = Field(None, max_length=16, description="NIK must be 16 characters")
     address: Optional[str] = Field(None, max_length=100, description="Address must be less than 100 characters")
     role: Role = Field(default=Role.USER)
     status: UserStatus = Field(default=UserStatus.BASIC)
+    email_verified_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
-    @validator('full_name')
+    @field_validator('full_name')
     def validate_full_name(cls, value):
         if not value.strip():
             raise ValueError('Full name cannot be empty')
         if len(value) > 255:
             raise ValueError('Full name must be less than 255 characters')
-        if not value.replace(' ', '').isalpha():
-            raise ValueError('Full name must contain only alphabetic characters')
-        return value
 
-    @validator('phone_number')
+    @field_validator('phone_number')
     def validate_phone_number(cls, value):
         if value and not value.isdigit():
             raise ValueError('Phone number must contain only digits')
@@ -54,7 +51,7 @@ class User(Document):
             raise ValueError('Phone number must start with 08')
         return value
 
-    @validator('NIK')
+    @field_validator('NIK')
     def validate_nik(cls, value):
         if value and not value.isdigit():
             raise ValueError('NIK must contain only digits')
@@ -62,7 +59,7 @@ class User(Document):
             raise ValueError('NIK must be 16 characters')
         return value
 
-    @validator('address')
+    @field_validator('address')
     def validate_address(cls, value):
         if value and len(value) > 100:
             raise ValueError('Address must be less than 100 characters')

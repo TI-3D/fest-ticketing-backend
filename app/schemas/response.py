@@ -7,16 +7,12 @@ class ErrorDetail(BaseModel):
     message: str
 
 class ResponseModel(BaseModel):
-    code: int
-    timestamp: datetime
+    code: int = 200
     message: str
     
     class Config:
         from_attributes = True
         exlude_none = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
 
 class ResponseSuccess(ResponseModel):
     data: Optional[Any] = None
@@ -26,4 +22,8 @@ class ResponseSuccess(ResponseModel):
         exlude_none = True
     
 class ResponseError(ResponseModel):
-    errors: List[ErrorDetail]
+    errors: Optional[List[ErrorDetail]] = None
+    
+    class Config:
+        from_attributes = True
+        exlude_none = True

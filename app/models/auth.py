@@ -5,6 +5,7 @@ from datetime import datetime
 from enum import Enum
 from app.models.user import User  # Ensure this import is below the class definition
 
+
 class Provider(str, Enum):
     GOOGLE = "google"
     EMAIL = "email"
@@ -12,7 +13,7 @@ class Provider(str, Enum):
 class Authentication(Document):
     authentication_id: Optional[PydanticObjectId] = Field(default_factory=PydanticObjectId, primary_key=True)
     provider: Provider = Field(description="Name of the authentication provider.")
-    user: Link[User]
+    user_id: PydanticObjectId = Field(description="User ID of the user associated with this authentication.")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
@@ -28,7 +29,7 @@ class Authentication(Document):
 class EmailAuthentication(Document):
     email_authentication_id: Optional[PydanticObjectId] = Field(default_factory=PydanticObjectId, primary_key=True)
     password: str = Field(..., min_length=3, max_length=255)
-    user: Link[User]
+    user_id: PydanticObjectId = Field(description="User ID of the user associated with this email authentication.")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
@@ -44,7 +45,7 @@ class EmailAuthentication(Document):
 class GoogleAuthentication(Document):
     google_authentication_id: Optional[PydanticObjectId] = Field(default_factory=PydanticObjectId, primary_key=True)
     google_id: str = Field(..., min_length=3, max_length=255)
-    user: Link[User]
+    user_id: PydanticObjectId = Field(description="User ID of the user associated with this Google authentication.")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 

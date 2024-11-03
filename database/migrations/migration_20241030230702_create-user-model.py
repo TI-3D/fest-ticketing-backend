@@ -1,5 +1,3 @@
-# database/migrations/migration_YYYYMMDDHHMMSS_create_user.py
-
 from pymongo import ASCENDING, IndexModel
 from pymongo.errors import CollectionInvalid
 from app.models import User  # Adjust import according to your project structure
