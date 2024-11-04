@@ -8,3 +8,4 @@ htmlcov
 .venv
 .env
 app.log
+docker/mognodb/data

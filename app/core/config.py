@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     
     API_V1: str = "/api/v1/"
     
+    MONGO_SRV: bool = False
     MONGO_USERNAME: str
     MONGO_PASSWORD: str
     MONGO_SERVER: str = "localhost"
@@ -16,10 +17,11 @@ class Settings(BaseSettings):
 
     @property
     def MONGO_URI(self) -> str:
+        connection = "mongodb+srv" if self.MONGO_SRV else "mongodb"
         if self.MONGO_USERNAME and self.MONGO_PASSWORD:
-            return f"mongodb+srv://{self.MONGO_USERNAME}:{self.MONGO_PASSWORD}@{self.MONGO_SERVER}:{self.MONGO_PORT}"
-        return f"mongodb://{self.MONGO_SERVER}:{self.MONGO_PORT}"
-    
+            return f"{connection}://{self.MONGO_USERNAME}:{self.MONGO_PASSWORD}@{self.MONGO_SERVER}:{self.MONGO_PORT}"
+        else:
+            return f"{connection}://{self.MONGO_SERVER}:{self.MONGO_PORT}"
     
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
@@ -30,7 +32,7 @@ class Settings(BaseSettings):
     
     # CORS_ORIGINS: list[str] | str = []
     
-    GOOGLE_CLIENT_ID: str
+    # GOOGLE_CLIENT_ID: str
     
     SECURE_COOKIE: bool = False
     
@@ -46,6 +48,7 @@ class Settings(BaseSettings):
     EMAIL_RESET_TOKEN_EXPIRE_MINUTES: int = 5
     
     AUTH_EXCLUDED_PATHS: list[str] = [
+        "/",
         "/api/v1/auth/signup", 
         "/api/v1/auth/signin", 
         "/api/v1/auth/google-signin", 
@@ -55,6 +58,7 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 settings = Settings()
+
 import logging
 
 class Logger:
