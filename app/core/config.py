@@ -17,11 +17,12 @@ class Settings(BaseSettings):
 
     @property
     def MONGO_URI(self) -> str:
-        connection = "mongodb+srv" if self.MONGO_SRV else "mongodb"
+        connection = "mongodb+srv" if self.MONGO_SRV else "mongodb" 
         if self.MONGO_USERNAME and self.MONGO_PASSWORD:
             return f"{connection}://{self.MONGO_USERNAME}:{self.MONGO_PASSWORD}@{self.MONGO_SERVER}:{self.MONGO_PORT}"
         else:
             return f"{connection}://{self.MONGO_SERVER}:{self.MONGO_PORT}"
+        
     
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
@@ -34,10 +35,7 @@ class Settings(BaseSettings):
     
     # GOOGLE_CLIENT_ID: str
     
-    SECURE_COOKIE: bool = False
     
-    SMTP_TLS: bool = True
-    SMTP_SSL: bool = False
     SMTP_PORT: int = 587
     SMTP_HOST: str | None = None
     SMTP_USER: str | None = None
@@ -52,6 +50,10 @@ class Settings(BaseSettings):
         "/api/v1/auth/signup", 
         "/api/v1/auth/signin", 
         "/api/v1/auth/google-signin", 
+        "/api/v1/mail/send-otp",
+        "/api/v1/mail/verification",
+        "/api/v1/mail/resend-otp",
+        
         ]
     
     class Config:

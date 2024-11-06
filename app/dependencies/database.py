@@ -5,6 +5,7 @@ from beanie import init_beanie
 from app.models.user import User
 from app.models.auth import Authentication, EmailAuthentication, GoogleAuthentication
 from app.models.personal_access_token import PersonalAccessToken
+from app.models.otp import OTP
 
 # Create the MongoDB client and select the database
 mongo_client = AsyncIOMotorClient(settings.MONGO_URI)
@@ -19,7 +20,8 @@ async def init_db():
             Authentication,
             EmailAuthentication,
             GoogleAuthentication,
-            PersonalAccessToken
+            PersonalAccessToken,
+            OTP,
         ]
     )
 

@@ -19,8 +19,8 @@ class Gender(str, Enum):
 
 class User(Document):
     user_id: PydanticObjectId = Field(default_factory=PydanticObjectId, primary_key=True)
-    full_name: str = Field(max_length=255, description="Full name of the user")
-    email: EmailStr
+    full_name: Optional[str] = Field(..., description="Full name of the user", required=True)
+    email: EmailStr = Field(..., description="Email address of the user", required=True)
     gender: Optional[Gender] = None  
     birth_date: Optional[datetime] = None
     phone_number: Optional[str] = Field(None, max_length=16, description="Phone number must be 16 characters or less")
@@ -28,17 +28,23 @@ class User(Document):
     address: Optional[str] = Field(None, max_length=100, description="Address must be less than 100 characters")
     role: Role = Field(default=Role.USER)
     status: UserStatus = Field(default=UserStatus.BASIC)
-    email_verified_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
     @field_validator('full_name')
     def validate_full_name(cls, value):
-        if not value.strip():
-            raise ValueError('Full name cannot be empty')
-        if len(value) > 255:
-            raise ValueError('Full name must be less than 255 characters')
-
+        if not value:
+            raise ValueError('Full name is required')
+        if len(value) < 3:
+            raise ValueError('Full name must be at least 3 characters')
+        return value    
+    
+    @field_validator('email')
+    def validate_email(cls, value):
+        if not value:
+            raise ValueError('Email is required')
+        return value
+        
     @field_validator('phone_number')
     def validate_phone_number(cls, value):
         if value and not value.isdigit():

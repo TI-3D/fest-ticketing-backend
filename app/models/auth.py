@@ -30,6 +30,7 @@ class EmailAuthentication(Document):
     email_authentication_id: Optional[PydanticObjectId] = Field(default_factory=PydanticObjectId, primary_key=True)
     password: str = Field(..., min_length=3, max_length=255)
     user_id: PydanticObjectId = Field(description="User ID of the user associated with this email authentication.")
+    email_verified_at: Optional[datetime] = Field(default=None, description="Timestamp when the email was verified.")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 

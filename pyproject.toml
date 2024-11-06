@@ -26,6 +26,7 @@ dependencies = [
     "motor>=3.6.0",
     "beanie>=1.27.0",
     "pymongo-migrate>=1.0.0",
+    "jinja2>=3.1.4",
 ]
 
 [tool.uv]

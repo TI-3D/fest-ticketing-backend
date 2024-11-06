@@ -20,6 +20,10 @@ class ForbiddenException(HTTPException):
 class NotFoundException(HTTPException):
     def __init__(self, message: str):
         super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+    
+class MethodNotAllowedException(HTTPException):
+    def __init__(self, message: str):
+        super().__init__(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail=message)
 
 class ServerErrorException(HTTPException):
     def __init__(self, message: str):

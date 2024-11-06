@@ -7,6 +7,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 from app.core.config import settings, Logger
 from app.repositories.personal_access_token_repository import PersonalAccessTokenRepository
+from app.repositories.user_repository import UserRepository
 from app.core.exception import (
     NotFoundException,
     ServerErrorException,
@@ -18,11 +19,12 @@ class AuthService:
     def __init__(self, db: AsyncIOMotorDatabase):
         self.logger = Logger(__name__).get_logger()
         self.auth_repository = AuthRepository(db)
+        self.user_repository = UserRepository(db)
         self.personal_access_token_repository = PersonalAccessTokenRepository(db)
 
     async def signup(self, request: SignupRequest) -> SignupResponse:
         self.logger.debug(f"Signing up user: {request.email}")
-        user_exist = await self.auth_repository.get_user_by_email(request.email)
+        user_exist = await self.user_repository.get_user_by_email(request.email)
         if user_exist:
             self.logger.error(f"Signup failed: User already exists with email {request.email}")
             raise BadRequestException("User already exists")
@@ -54,12 +56,13 @@ class AuthService:
     async def signin(self, request: SigninRequest) -> SigninResponse:
         self.logger.debug(f"Signing in user: {request.email}")
         try:
-            user = await self.auth_repository.get_user_by_email(request.email)
+            user = await self.user_repository.get_user_by_email(request.email)
             if not user:
                 self.logger.error(f"Signin failed: User not found with email {request.email}")
                 raise NotFoundException("User not found")
             
             email_auth = await self.auth_repository.get_email_authentication_by_user_id(user.user_id)
+            print("Test::", user.user_id, email_auth, request.password)
             if not email_auth or not verify_password(request.password, email_auth.password):
                 self.logger.error("Signin failed: Invalid email or password")
                 raise BadRequestException("Invalid email or password")
@@ -95,7 +98,7 @@ class AuthService:
             raise ValueError("Invalid Google ID token")
         
         email = payload['email']
-        user = await self.auth_repository.get_user_by_email(email)
+        user = await self.user_repository.get_user_by_email(email)
         if not user:
             self.logger.debug(f"Creating new user from Google sign-in: {email}")
             user = User(

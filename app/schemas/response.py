@@ -7,7 +7,6 @@ class ErrorDetail(BaseModel):
     message: str
 
 class ResponseModel(BaseModel):
-    code: int = 200
     message: str
     
     class Config:

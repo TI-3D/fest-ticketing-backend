@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
 from app.schemas.response import ResponseError, ResponseModel, ResponseSuccess, ErrorDetail
 from app.api.v1.endpoints.auth import router as auth_router
+from app.api.v1.endpoints.mail import router as mail_router
 from datetime import datetime
 from app.utils.response_helper import ResponseHelper
 from fastapi.exceptions import RequestValidationError, HTTPException
@@ -16,6 +17,7 @@ from app.core.exception import (
     BadRequestException,
     ForbiddenException,
     NotFoundException,
+    MethodNotAllowedException,
     ServerErrorException,
     RedirectionException    
 )
@@ -71,13 +73,14 @@ app.add_middleware(AuthenticationMiddleware)
 async def validation_exception_handler(request: Request, exc: RequestValidationError | ValueError):
     return ResponseHelper.status(422).json({
         "message": "Validation Error",
-        "errors": get_error_details(exc)
+        "errors": get_error_details(exc),
+        
     })
     
-@app.exception_handler(UnauthorizedException)
-async def unauthorized_exception_handler(request: Request, exc: UnauthorizedException):
-    return ResponseHelper.status(401).json({
-        "message": exc.detail  # Menggunakan "message" sebagai kunci respons
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    return ResponseHelper.status(exc.status_code).json({
+        "message": exc.detail
     })
 
 @app.exception_handler(Exception)
@@ -85,9 +88,9 @@ async def general_exception_handler(request: Request, exc: Exception):
     # Check for known HTTP exceptions
     if isinstance(exc, (
         HTTPException,
-        NotFoundException, 
-        StarletteHTTPException,
+        NotFoundException,  
         UnauthorizedException, 
+        MethodNotAllowedException,
         BadRequestException, 
         ForbiddenException, 
         ServerErrorException, 
@@ -104,6 +107,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 # Include user and auth routes
 app.include_router(auth_router, prefix=settings.API_V1 + "auth", tags=["Authentication"])
+app.include_router(mail_router, prefix=settings.API_V1 + "mail", tags=["Mail"])
 
 @app.get("/", response_model=ResponseSuccess)
 async def root():

@@ -7,5 +7,6 @@ htmlcov
 .cache
 .venv
 .env
+.env.*
 app.log
 docker/mognodb/data
