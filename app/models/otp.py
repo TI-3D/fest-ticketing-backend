@@ -1,14 +1,16 @@
-from beanie import Document, Link, PydanticObjectId
+from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
-from pydantic import Field, EmailStr
+from typing import Optional
 
-class OTP(Document):
-    otp_id: PydanticObjectId = Field(default_factory=PydanticObjectId, primary_key=True)
-    email: EmailStr = Field(description="Email address to send OTP")
-    hash: str = Field(description="Hashed OTP")
-    otp: str = Field(description="OTP code")
-    expiration: datetime  = Field(description="Expiration time of OTP")
-    created_at: datetime = Field(default_factory=datetime.now)
-    
-    class Settings:
-        collection = "otps"
+class OTP(SQLModel, table=True):
+    __tablename__ = 'otps'
+
+    otp_id: Optional[int] = Field(default=None, primary_key=True)
+    otp_code: str = Field(index=True, nullable=False)
+    user_id: str = Field(foreign_key="users.user_id", nullable=False)
+    hashed_otp: str = Field(nullable=False)
+    created_at: datetime = Field(default=datetime.now)
+    expires_at: datetime = Field(nullable=False)
+
+    # Relationship to User
+    user: "User" = Relationship(back_populates="otp")

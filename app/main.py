@@ -1,37 +1,16 @@
 from fastapi import FastAPI, Request
-from contextlib import asynccontextmanager
-from app.schemas.response import ResponseError, ResponseModel, ResponseSuccess, ErrorDetail
+from fastapi.responses import JSONResponse
+from app.schemas.response import ResponseError, ResponseModel
 from app.api.v1.endpoints.auth import router as auth_router
-from app.api.v1.endpoints.mail import router as mail_router
-from datetime import datetime
-from app.utils.response_helper import ResponseHelper
 from fastapi.exceptions import RequestValidationError, HTTPException
 from app.utils.get_error_details import get_error_details
-from app.dependencies.database import init_db
 from app.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.middleware import (LoggingMiddleware, AuthenticationMiddleware, RoutingMiddleware)
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from app.core.exception import (
-    UnauthorizedException,
-    BadRequestException,
-    ForbiddenException,
-    NotFoundException,
-    MethodNotAllowedException,
-    ServerErrorException,
-    RedirectionException    
-)
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    try:
-        await init_db()
-        yield
-    finally:
-        pass 
-    
+
 app = FastAPI(
-    lifespan=lifespan,
     responses={
         400: {
             "model": ResponseModel,
@@ -44,6 +23,10 @@ app = FastAPI(
         403: {
             "model": ResponseModel,
             "description": "Forbidden"
+        },
+        404: {
+            "model": ResponseModel,
+            "description": "Not Found"
         },
         422: {
             "model": ResponseError,
@@ -71,49 +54,53 @@ app.add_middleware(AuthenticationMiddleware)
 # handle 422 error
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError | ValueError):
-    return ResponseHelper.status(422).json({
-        "message": "Validation Error",
-        "errors": get_error_details(exc),
-        
-    })
+    return JSONResponse(
+        status_code=422,
+        content=ResponseError(
+            message="Validation Error",
+            errors=get_error_details(exc)
+        ).model_dump()
+    )
     
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    return ResponseHelper.status(exc.status_code).json({
-        "message": exc.detail
-    })
-
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=ResponseModel(
+            message=exc.detail
+        ).model_dump()
+    )
+    
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    # Check for known HTTP exceptions
     if isinstance(exc, (
         HTTPException,
-        NotFoundException,  
-        UnauthorizedException, 
-        MethodNotAllowedException,
-        BadRequestException, 
-        ForbiddenException, 
-        ServerErrorException, 
-        RedirectionException
     )):
-        return ResponseHelper.status(exc.status_code).json({
-            "message": exc.detail
-        })
-    # Fallback for any other exceptions
-    return ResponseHelper.status(500).json({
-        "message": "Internal Server Error",
-    })
-
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=ResponseModel(
+                message=exc.detail
+            ).model_dump()
+        )
+        
+    return JSONResponse(
+        status_code=500,
+        content=ResponseModel(
+            message="Internal Server Error"
+        ).model_dump()
+    )
 
 # Include user and auth routes
 app.include_router(auth_router, prefix=settings.API_V1 + "auth", tags=["Authentication"])
-app.include_router(mail_router, prefix=settings.API_V1 + "mail", tags=["Mail"])
 
-@app.get("/", response_model=ResponseSuccess)
+@app.get("/", response_model=ResponseModel)
 async def root():
-   return ResponseHelper.status().json({
-        "message": "Welcome to the User API!"
-    })
+    return JSONResponse(
+        status_code=200,
+        content=ResponseModel(
+            message="Welcome to the User API!"
+        ).model_dump()
+    )
 
 if __name__ == "__main__":
     import uvicorn

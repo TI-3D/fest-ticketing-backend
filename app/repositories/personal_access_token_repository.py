@@ -1,73 +1,78 @@
-from typing import Optional
-from datetime import datetime, timedelta
-from pydantic import EmailStr
-from app.models.personal_access_token import PersonalAccessToken
-from app.models.user import User
-from motor.motor_asyncio import AsyncIOMotorDatabase
-from bson import ObjectId
-from app.core.exception import (
-    NotFoundException,
-    ServerErrorException,
-    UnauthorizedException
-)
-from app.core.security import create_access_token, verify_access_token
+from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from app.models import PersonalAccessToken, User
 from app.core.config import Logger
-
+from sqlalchemy import delete
+from typing import Optional
 
 class PersonalAccessTokenRepository:
-    def __init__(self, db: AsyncIOMotorDatabase):
-        # Usage
-        self.logger = Logger(__name__).get_logger()
-        self.db = db
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.logger = Logger(__name__).get_logger()  # Initialize the logger
 
-    async def create_token(self, user_id: ObjectId, email: EmailStr, device_id: Optional[str] = None, is_google: bool = False) -> PersonalAccessToken:
+    async def get_token_by_id(self, token_id: int) -> Optional[PersonalAccessToken]:
         try:
-            access_token = create_access_token(user_id, email, is_google)
-            token = PersonalAccessToken(
-                personal_access_token_id=ObjectId(),
-                user_id=user_id,
-                device_id=device_id,
-                access_token=access_token.token,
-                access_token_expired=datetime.now() + timedelta(seconds=access_token.expires_in),
-                created_at=datetime.now(),
-                updated_at=datetime.now()
-            )
-            await self.db["personal_access_tokens"].insert_one(token.model_dump())
-            self.logger.info(f"Token created for user {user_id}.")
+            self.logger.info(f"Attempting to retrieve token by id: {token_id}")
+            result = await self.session.execute(select(PersonalAccessToken).where(PersonalAccessToken.token_id == token_id))
+            token = result.scalars().first()
+            if not token:
+                self.logger.warning(f"Token not found with id: {token_id}")
+                raise HTTPException(status_code=404, detail=f"Token not found with id: {token_id}")
+            self.logger.info(f"Token found with id: {token_id}")
             return token
         except Exception as e:
-            self.logger.error(f"Error creating token for user {user_id}: {e}")
-            raise ServerErrorException("An error occurred while creating the token")
+            self.logger.error(f"Unexpected error: {str(e)}")
+            raise 
 
-    async def get_user_by_access_token(self, access_token: str) -> Optional[User]:
+    async def get_token_by_user_id(self, user_id: int) -> Optional[PersonalAccessToken]:
         try:
-            user_id = await verify_access_token(self.db, access_token)
-            user = await self.db["users"].find_one({"user_id": user_id})
-            self.logger.info(f"User retrieved for access token: {access_token}.")
-            return User(**user) if user else None
-        except UnauthorizedException as e:
-            self.logger.warning(f"Unauthorized access attempt with token: {access_token}.")
-            raise e
-        except NotFoundException as e:
-            self.logger.warning(f"User not found exception: {e}.")
-            raise e
+            self.logger.info(f"Attempting to retrieve token by user_id: {user_id}")
+            result = await self.session.execute(select(PersonalAccessToken).where(PersonalAccessToken.user_id == user_id))
+            token = result.scalars().first()
+            if not token:
+                self.logger.warning(f"Token not found for user_id: {user_id}")
+                return None
+            self.logger.info(f"Token found for user_id: {user_id}")
+            return token
         except Exception as e:
-            self.logger.error(f"Error retrieving user by access token: {e}.")
-            raise ServerErrorException("An error occurred while getting the user")
-
-
-
-    async def delete_token(self, access_token: str) -> bool:
+            self.logger.error(f"Unexpected error: {str(e)}")
+            raise
+    
+    async def get_token_by_token(self, access_token: str) -> Optional[PersonalAccessToken]:
         try:
-            user_id = await verify_access_token(self.db, access_token)
-            if not user_id:
-                raise UnauthorizedException("Invalid credentials")
-            await self.db["personal_access_tokens"].delete_one({"access_token": access_token})
-            self.logger.info(f"Token deleted for user {user_id}.")
+            self.logger.info(f"Attempting to retrieve token by token: {access_token}")
+            result = await self.session.execute(select(PersonalAccessToken).where(PersonalAccessToken.access_token == access_token))
+            access_token = result.scalars().first()
+            if not access_token:
+                self.logger.warning(f"Token not found with token: {access_token}")
+                raise HTTPException(status_code=401, detail=f"Invalid credentials")
+            self.logger.info(f"Token found with token: {access_token}")
+            return access_token
+        except Exception as e:
+            self.logger.error(f"Unexpected error: {str(e)}")
+            raise
+            
+    async def create_token(self, token: PersonalAccessToken) -> PersonalAccessToken:
+        try:
+            self.logger.info(f"Attempting to create personal access token for user_id: {token.user_id}")
+            self.session.add(token)  # Add the token object to the session
+            self.logger.info(f"Personal access token for user_id {token.user_id} created successfully.")
+            return token
+        except Exception as e:
+            self.logger.error(f"Error creating token: {str(e)}")
+            raise 
+
+    async def delete_token(self, token_id: int) -> bool:
+        try:
+            self.logger.info(f"Attempting to delete token with id: {token_id}")
+            stmt = delete(PersonalAccessToken).where(PersonalAccessToken.token_id == token_id)
+            result = await self.session.execute(stmt)
+            if result.rowcount == 0:
+                self.logger.warning(f"Token with id {token_id} not found for deletion.")
+                raise HTTPException(status_code=404, detail=f"Token with id {token_id} not found for deletion")
+            self.logger.info(f"Token with id {token_id} deleted successfully.")
             return True
-        except UnauthorizedException as e:
-            self.logger.warning(f"Unauthorized access attempt with token: {access_token}.")
-            raise e
         except Exception as e:
-            self.logger.error(f"Error deleting token for user: {e}.")
-            raise ServerErrorException("An error occurred while deleting the token")
+            self.logger.error(f"Unexpected error deleting token: {str(e)}")
+            raise 

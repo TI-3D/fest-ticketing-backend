@@ -1,34 +1,25 @@
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
-from motor.motor_asyncio import AsyncIOMotorClient
-from motor.core import AgnosticDatabase
-from beanie import init_beanie
-from app.models.user import User
-from app.models.auth import Authentication, EmailAuthentication, GoogleAuthentication
-from app.models.personal_access_token import PersonalAccessToken
-from app.models.otp import OTP
 
-# Create the MongoDB client and select the database
-mongo_client = AsyncIOMotorClient(settings.MONGO_URI)
-mongo_db: AgnosticDatabase = mongo_client[settings.MONGO_DB_NAME]
+# Create async engine with the provided database URI
+engine = create_async_engine(
+    settings.SQLALCHEMY_DATABASE_URI,  # e.g., 'postgresql+asyncpg://user:password@localhost/dbname'
+    echo=True,
+    future=True,  # Required for compatibility with SQLAlchemy 2.x
+    pool_pre_ping=True,  # Ensures connections are alive before use
+)
 
-async def init_db():
-    """Initializes the Beanie ODM with the provided document models."""
-    await init_beanie(
-        database=mongo_db,  # Use the already initialized mongo_db
-        document_models=[
-            User,
-            Authentication,
-            EmailAuthentication,
-            GoogleAuthentication,
-            PersonalAccessToken,
-            OTP,
-        ]
-    )
+# Session factory
+# Using sessionmaker to bind to the engine and create AsyncSession objects
+AsyncSessionLocal = sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False  # Keeps objects after commit (avoid session refresh issues)
+)
 
-# MongoDB getter function for FastAPI dependency injection
-def get_mongo_db() -> AgnosticDatabase:
-    """Returns the initialized MongoDB database."""
-    if mongo_db is not None:  # Ensure the database instance is initialized
-        return mongo_db
-    else:
-        raise RuntimeError("Failed to initialize MongoDB client.")
+# Dependency for creating async database session
+async def get_db() -> AsyncSession:
+    # Create a new session, yield it to the route or function, and close it when done
+    async with AsyncSessionLocal() as session:
+        yield session

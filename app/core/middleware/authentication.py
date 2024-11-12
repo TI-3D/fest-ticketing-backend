@@ -21,7 +21,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         # Check if the request path is valid (exists in routes)
         if not any(route.path == request.url.path for route in app.routes):
             return await call_next(request)  # Pass to the NotFoundMiddleware
-
+        
         # Check for token in the Authorization header
         token = request.headers.get("Authorization")
         if not token or not token.startswith("Bearer "):

@@ -8,21 +8,38 @@ class Settings(BaseSettings):
     
     API_V1: str = "/api/v1/"
     
-    MONGO_SRV: bool = False
-    MONGO_USERNAME: str
-    MONGO_PASSWORD: str
-    MONGO_SERVER: str = "localhost"
-    MONGO_PORT: int = 27017
-    MONGO_DB_NAME: str  = "fest_ticketing"
+    DB_CONNECTION: str = "mysql" # mysql, postgresql, sqlite, sqlserver, etc
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 3306
+    DB_NAME: str  = "fest_ticketing"
 
     @property
-    def MONGO_URI(self) -> str:
-        connection = "mongodb+srv" if self.MONGO_SRV else "mongodb" 
-        if self.MONGO_USERNAME and self.MONGO_PASSWORD:
-            return f"{connection}://{self.MONGO_USERNAME}:{self.MONGO_PASSWORD}@{self.MONGO_SERVER}:{self.MONGO_PORT}"
+    def SQLALCHEMY_DATABASE_URI(self) -> str:
+        """
+        Menghasilkan URL koneksi yang sesuai berdasarkan konfigurasi database.
+        """
+        if self.DB_CONNECTION == "sqlite":
+            # SQLite tidak memerlukan username dan password, cukup dengan file database
+            return f"sqlite:///{self.DB_NAME}.db"  # Biasanya file path untuk SQLite
+        elif self.DB_CONNECTION == "mysql":
+            if self.DB_USER and self.DB_PASSWORD:
+                return f"mysql+pymysql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+            else:
+                return f"mysql+pymysql://{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        elif self.DB_CONNECTION == "postgresql":
+            if self.DB_USER and self.DB_PASSWORD:
+                return f"postgresql+psycopg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+            else:
+                return f"postgresql+psycopg://{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        elif self.DB_CONNECTION == "mssql":
+            if self.DB_USER and self.DB_PASSWORD:
+                return f"mssql+pyodbc://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}?driver=SQL+Server"
+            else:
+                return f"mssql+pyodbc://{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}?driver=SQL+Server"
         else:
-            return f"{connection}://{self.MONGO_SERVER}:{self.MONGO_PORT}"
-        
+            raise ValueError(f"Unsupported DB_CONNECTION: {self.DB_CONNECTION}")
     
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
@@ -50,10 +67,8 @@ class Settings(BaseSettings):
         "/api/v1/auth/signup", 
         "/api/v1/auth/signin", 
         "/api/v1/auth/google-signin", 
-        "/api/v1/mail/send-otp",
-        "/api/v1/mail/verification",
-        "/api/v1/mail/resend-otp",
-        
+        "/api/v1/auth/send-otp",
+        "/api/v1/auth/verification",
         ]
     
     class Config:

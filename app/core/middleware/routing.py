@@ -1,8 +1,7 @@
-from fastapi import FastAPI, Request
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.exception import NotFoundException
 from app.core.config import Logger
-
 logger = Logger(__name__).get_logger()
 
 class RoutingMiddleware(BaseHTTPMiddleware):

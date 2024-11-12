@@ -1,6 +1,5 @@
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional, Dict, Any
-from beanie import PydanticObjectId
 from app.models.user import Gender, User
 from app.schemas.response import ResponseModel
 
@@ -60,43 +59,6 @@ class SigninRequest(BaseModel):
             raise ValueError('Password must be at least 8 characters long')
         return value
 
-class GoogleSignupRequest(BaseModel):
-    google_id: str
-    email: EmailStr
-    full_name: Optional[str]
-
-    @field_validator('google_id')
-    def validate_google_id(cls, value):
-        if not value.strip():
-            raise ValueError('Google ID cannot be empty')
-        if len(value) > 255:
-            raise ValueError('Google ID must be less than 255 characters')
-        return value
-    
-    @field_validator('full_name')
-    def validate_full_name(cls, value):
-        if value and len(value) > 255:
-            raise ValueError('Full name must be less than 255 characters')
-        return value
-    
-    @field_validator('email')
-    def validate_email(cls, value):
-        if not value.strip():
-            raise ValueError('Email cannot be empty')
-        if len(value) > 255:
-            raise ValueError('Email must be less than 255 characters')
-        return value
-
-class GoogleSigninRequest(BaseModel):
-    google_id: str
-
-    @field_validator('google_id')
-    def validate_google_id(cls, value):
-        if not value.strip():
-            raise ValueError('Google ID cannot be empty')
-        if len(value) > 255:
-            raise ValueError('Google ID must be less than 255 characters')
-        return value
 
 class TokenData(BaseModel):
     token: str
@@ -107,9 +69,9 @@ class TokenPair(BaseModel):
     access_token: TokenData
     
 class SignupResponse(ResponseModel):
-    pass
+    data: Dict[str, str]
     
 
 class SigninResponse(ResponseModel):
-    data: Dict[str, User]
+    data: User
     token: TokenPair

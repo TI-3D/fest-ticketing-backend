@@ -22,11 +22,15 @@ dependencies = [
     "ruff>=0.6.8",
     "google-auth>=2.35.0",
     "python-jose>=3.3.0",
-    "redis>=5.2.0",
+    "redis[hiredis]>=5.2.0",
     "motor>=3.6.0",
     "beanie>=1.27.0",
     "pymongo-migrate>=1.0.0",
     "jinja2>=3.1.4",
+    "alembic>=1.14.0",
+    "sqlmodel>=0.0.22",
+    "psycopg2>=2.9.10",
+    "asyncpg>=0.30.0",
 ]
 
 [tool.uv]

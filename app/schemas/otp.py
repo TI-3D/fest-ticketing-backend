@@ -11,10 +11,10 @@ class VerifyOtpRequest(BaseModel):
     email: EmailStr
     otp: str
     
+class VerifyOtpResponse(ResponseModel):
+    pass
 
-class SendOtpResponse(BaseModel):
-    message: str
+class SendOtpResponse(ResponseModel):
     data: Optional[dict] = None
-    # field for unicorn response help front end path to post verify otp
     
 

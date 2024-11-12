@@ -1,61 +1,80 @@
-from typing import Optional, Union
-from motor.motor_asyncio import AsyncIOMotorDatabase
-from app.models.user import User
-from bson import ObjectId
-from app.core.exception import BadRequestException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy import update, delete
+from app.models import User
 from app.core.config import Logger
-
+from typing import Optional
+from fastapi import HTTPException  # Import HTTPException from FastAPI
 
 class UserRepository:
-    def __init__(self, db: AsyncIOMotorDatabase):
-        self.logger = Logger(__name__).get_logger()
-        self.db = db
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.logger = Logger(__name__).get_logger()  # Initialize the logger
+
+    async def create(self, user: User) -> User:
+        try:
+            self.logger.info(f"Attempting to create user with email: {user.email}")
+            self.session.add(user)  # Add the user object to the session
+            await self.session.flush()  # Ensure the user_id is generated
+            await self.session.refresh(user)  # Refresh to populate user_id
+            self.logger.info(f"User with email {user.email} created successfully.")
+            return user
+        except Exception as e:
+            self.logger.error(f"Error creating user with email {user.email}: {str(e)}")
+            raise HTTPException(status_code=400, detail="Error creating user")
 
     async def get_user_by_email(self, email: str) -> Optional[User]:
-        self.logger.debug(f"Fetching user by email: {email}")
-        user = await self.db['users'].find_one({"email": email})
-        if user:
-            self.logger.info(f"User found: {user}")
-        else:
-            self.logger.warning(f"No user found with email: {email}")
-        return User(**user) if user else None
+        try:
+            self.logger.info(f"Attempting to retrieve user by email: {email}")
+            result = await self.session.execute(select(User).where(User.email == email))
+            user = result.scalars().first()
+            if not user:
+                self.logger.warning(f"User not found with email: {email}")
+                return None
+            self.logger.info(f"User found with email: {email}")
+            return user
+        except Exception as e:
+            self.logger.error(f"Error retrieving user by email {email}: {str(e)}")
+            raise HTTPException(status_code=400, detail="Error retrieving user by email")
 
-    async def get_user_by_google_id(self, google_id: str) -> Optional[User]:
-        self.logger.debug(f"Fetching user by Google ID: {google_id}")
-        user = await self.db['users'].find_one({"google_id": google_id})
-        if user:
-            self.logger.info(f"User found: {user}")
-        else:
-            self.logger.warning(f"No user found with Google ID: {google_id}")
-        return User(**user) if user else None
+    async def get_user_by_id(self, user_id: int) -> Optional[User]:
+        try:
+            self.logger.info(f"Attempting to retrieve user by id: {user_id}")
+            result = await self.session.execute(select(User).where(User.user_id == user_id))
+            user = result.scalars().first()
+            if not user:
+                self.logger.warning(f"User not found with id: {user_id}")
+                return None
+            self.logger.info(f"User found with id: {user_id}")
+            return user
+        except Exception as e:
+            self.logger.error(f"Error retrieving user by id {user_id}: {str(e)}")
+            raise HTTPException(status_code=400, detail="Error retrieving user by id")
 
-    async def get_user_by_id(self, user_id: ObjectId) -> Optional[User]:
-        self.logger.debug(f"Fetching user by ID: {user_id}")
-        user = await self.db['users'].find_one({"user_id": user_id})
-        if user:
-            self.logger.info(f"User found: {user}")
-        else:
-            self.logger.warning(f"No user found with ID: {user_id}")
-        return User(**user) if user else None
-    
-    async def create_user(self, user: User) -> User:
-        self.logger.debug(f"Creating user: {user.email}")
-        if await self.get_user_by_email(user.email):
-            self.logger.error(f"User with email already exists: {user.email}")
-            raise BadRequestException("User with email already exists")
-        await self.db['users'].insert_one(user.model_dump())
-        self.logger.info(f"User created successfully: {user.email}")
-        return user
-    
-    async def update_user(self, user: User) -> User:
-        self.logger.debug(f"Updating user: {user.email}")
-        await self.db['users'].update_one({"user_id": user.user_id}, {"$set": user.model_dump()})
-        self.logger.info(f"User updated successfully: {user.email}")
-        return user
-    
-    async def delete_user(self, user_id: ObjectId) -> bool:
-        self.logger.debug(f"Deleting user by ID: {user_id}")
-        result = await self.db['users'].delete_one({"user_id": user_id})
-        self.logger.info(f"User deleted successfully: {user_id}")
-        return result.deleted_count > 0
-    
+    async def update(self, user_id: int, updates: dict) -> User:
+        try:
+            self.logger.info(f"Attempting to update user with id: {user_id}")
+            stmt = update(User).where(User.user_id == user_id).values(**updates)
+            result = await self.session.execute(stmt)
+            if result.rowcount == 0:
+                self.logger.warning(f"User with id {user_id} not found for update.")
+                raise HTTPException(status_code=400, detail=f"User with id {user_id} not found for update.")
+            self.logger.info(f"User with id {user_id} updated successfully.")
+            return await self.get_user_by_id(user_id)  # Return the updated user
+        except Exception as e:
+            self.logger.error(f"Unexpected error updating user with id {user_id}: {str(e)}")
+            raise HTTPException(status_code=400, detail="Error updating user")
+
+    async def delete(self, user_id: int) -> bool:
+        try:
+            self.logger.info(f"Attempting to delete user with id: {user_id}")
+            stmt = delete(User).where(User.user_id == user_id)
+            result = await self.session.execute(stmt)
+            if result.rowcount == 0:
+                self.logger.warning(f"User with id {user_id} not found for deletion.")
+                raise HTTPException(status_code=400, detail=f"User with id {user_id} not found for deletion.")
+            self.logger.info(f"User with id {user_id} deleted successfully.")
+            return True
+        except Exception as e:
+            self.logger.error(f"Unexpected error deleting user with id {user_id}: {str(e)}")
+            raise HTTPException(status_code=400, detail="Error deleting user")
