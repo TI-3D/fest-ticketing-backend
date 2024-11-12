@@ -20,6 +20,13 @@ class ResponseModel(BaseModel):
         from_attributes = True
         exlude_none = True
 
+class ResponseSuccess(ResponseModel):
+    data: Optional[Dict[str, Any]] = None
+    
+    class Config:
+        from_attributes = True
+        exlude_none = True
+
 class ResponseError(ResponseModel):
     errors: Optional[List[ErrorDetail]] = None
     

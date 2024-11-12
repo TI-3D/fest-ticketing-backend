@@ -5,8 +5,8 @@ from app.models import User, PersonalAccessToken, Provider, ProviderName
 from app.repositories import UserRepository, PersonalAccessTokenRepository,ProviderRepository
 from app.services.otp_service import OTPService
 from app.schemas.auth import SignupRequest, SigninRequest, SignupResponse, SigninResponse
-from app.schemas.response import ResponseModel
-from app.core.security import generate_password_hash, check_password_hash, create_jwt_token
+from app.schemas.response import ResponseModel, ResponseSuccess
+from app.core.security import generate_password_hash, check_password_hash, create_jwt_token, verify_jwt_token
 from app.core.config import settings
 from app.schemas.otp import VerifyOtpRequest, VerifyOtpResponse, SendOtpRequest, SendOtpResponse
 
@@ -120,16 +120,11 @@ class AuthService:
             user = await self.user_repository.get_user_by_email(signin_data.email)
             if not user:
                 raise HTTPException(status_code=400, detail="Invalid email or password")
-            provider_list = await self.provider_repository.get_by_user_id(user.user_id)
-            if not provider_list:
-                raise HTTPException(status_code=400, detail="Invalid email or password")
-            for provider in provider_list:
-                if provider.provider_name == ProviderName.EMAIL:
-                    if not check_password_hash(signin_data.password, user.password_hash):
-                        raise HTTPException(status_code=400, detail="Invalid email or password")
-                # if provider.provider_name == ProviderName.GOOGLE:
-                #     # if provider.provider_id != signin_data.provider_id:
-                #         raise HTTPException(status_code=400, detail="Invalid email or password")
+            provider = await self.provider_repository.get_by_provider_name_by_user_id(user.user_id)
+            if provider is not None and provider.provider_name == ProviderName.EMAIL:
+                if not check_password_hash(signin_data.password, user.password_hash):
+                    raise HTTPException(status_code=400, detail="Invalid email or password")
+                
                 
 
             if user.email_verified_at is None:
@@ -156,10 +151,7 @@ class AuthService:
             return SigninResponse(
                 message="Sign in successful",
                 data={
-                    **user.model_dump(exclude=["password_hash"]),
-                    'role': str(user.role),  # Manually convert role enum to string
-                    'status': str(user.status),
-                    'gender': str(user.gender),
+                    "user": user.model_dump(exclude=["password_hash"]),
                 },
                 token={
                     "access_token": {
@@ -170,6 +162,28 @@ class AuthService:
                 }
                 
             )
+            
+    async def get_current_user(self, token: str) -> ResponseSuccess:
+        """
+        Get the current user based on the personal access token.
+        """
+        async with self.session.begin():
+            personal_token = await self.personal_access_token.get_token_by_token(token)
+            if not personal_token:
+                raise HTTPException(status_code=400, detail="Invalid credentials")
+            verify_token = verify_jwt_token(personal_token.access_token)
+            user_id = verify_token.get("user_id")
+            user = await self.user_repository.get_user_by_id(user_id)
+            if not user:
+                raise HTTPException(status_code=400, detail="User not found")
+            
+            return ResponseSuccess(
+                message="User found",
+                data={
+                    "user": user.model_dump(exclude=["password_hash"]),
+                }
+            )
+        
 
     async def signout(self, token: str) ->bool:
         """
@@ -180,6 +194,7 @@ class AuthService:
             print(personal_token)
             if not personal_token:
                 raise HTTPException(status_code=400, detail="Invalid credentials")
-
+            
+            verify_token = verify_jwt_token(personal_token.access_token)
             await self.personal_access_token.delete_token(personal_token.token_id)
             return ResponseModel(message="Sign out successful")

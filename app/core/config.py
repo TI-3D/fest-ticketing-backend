@@ -65,7 +65,7 @@ class Settings(BaseSettings):
     AUTH_EXCLUDED_PATHS: list[str] = [
         "/",
         "/api/v1/auth/signup", 
-        "/api/v1/auth/signin", 
+        "/api/v1/auth/signin",  
         "/api/v1/auth/google-signin", 
         "/api/v1/auth/send-otp",
         "/api/v1/auth/verification",

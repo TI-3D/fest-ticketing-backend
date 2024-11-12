@@ -5,7 +5,7 @@ from app.schemas.otp import VerifyOtpRequest, VerifyOtpResponse, SendOtpRequest,
 from app.services.auth_service import AuthService
 from app.dependencies import get_access_token, get_db
 from app.core.config import Logger
-from app.schemas.response import ResponseModel
+from app.schemas.response import ResponseModel, ResponseSuccess
 
 router = APIRouter()
 logger = Logger(__name__).get_logger()
@@ -88,6 +88,25 @@ async def signin(
         raise HTTPException(status_code=e.status_code, detail=str(e.detail))
     except Exception as e:
         logger.error(f"Unexpected error during signin for {request.email}: {str(e)}")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+    
+@router.get("/current", response_model=ResponseSuccess)
+async def current_user(
+    db=Depends(get_db),
+    access_token= Depends(get_access_token),
+):
+    auth_service = AuthService(db)
+    logger.debug(f"Received current user request for access token: {access_token}")
+    
+    try:
+        user = await auth_service.get_current_user(access_token)
+        logger.info(f"User retrieved successfully for access token: {access_token}")
+        return JSONResponse(content=user.model_dump(), status_code=200)
+    except HTTPException as e:
+        logger.warning(f"Unauthorized current user request: {str(e)}")
+        raise HTTPException(status_code=e.status_code, detail=str(e.detail))
+    except Exception as e:
+        logger.error(f"Unexpected error during current user request: {str(e)}")
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
     
 @router.delete("/signout", response_model=ResponseModel)

@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional, Dict, Any
 from app.models.user import Gender, User
-from app.schemas.response import ResponseModel
+from app.schemas.response import ResponseModel, ResponseSuccess
 
 class SignupRequest(BaseModel):
     full_name: str
@@ -68,10 +68,9 @@ class TokenData(BaseModel):
 class TokenPair(BaseModel):
     access_token: TokenData
     
-class SignupResponse(ResponseModel):
+class SignupResponse(ResponseSuccess):
     data: Dict[str, str]
     
 
-class SigninResponse(ResponseModel):
-    data: User
+class SigninResponse(ResponseSuccess):
     token: TokenPair
