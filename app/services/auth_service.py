@@ -136,10 +136,8 @@ class AuthService:
                 "email": user.email,
                 "role": str(user.role)
             }
-            
-            expire_in = timedelta(seconds=20)
 
-            jwt_token = create_jwt_token(payload, expire_in)
+            jwt_token = create_jwt_token(payload)
 
             # Generate a personal access token for the user
             token = PersonalAccessToken(
@@ -147,7 +145,7 @@ class AuthService:
                 device_id=signin_data.device_id,
                 access_token=jwt_token,
                 created_at=datetime.now(timezone.utc),
-                expires_at=datetime.now(timezone.utc) + expire_in
+                expires_at=datetime.now(timezone.utc) + timedelta(seconds=settings.ACCESS_TOKEN_EXPIRE_SECONDS)
             )
             await self.personal_access_token.create_token(token)
             return SigninResponse(
