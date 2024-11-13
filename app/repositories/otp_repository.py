@@ -4,7 +4,7 @@ from app.models import OTP
 from app.core.config import Logger
 from sqlalchemy import delete
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 class OTPRepository:
     def __init__(self, session: AsyncSession):
@@ -84,7 +84,7 @@ class OTPRepository:
     async def delete_expired_otps(self) -> bool:
         try:
             self.logger.info("Attempting to delete expired OTPs")
-            stmt = delete(OTP).where(OTP.expires_at < datetime.now())
+            stmt = delete(OTP).where(OTP.expires_at < datetime.now(timezone.utc))
             result = await self.session.execute(stmt)
             self.logger.info(f"Deleted {result.rowcount} expired OTPs")
             return True

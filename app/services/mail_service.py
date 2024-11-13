@@ -1,7 +1,7 @@
 import smtplib
 from email.message import EmailMessage
 from jinja2 import Environment, FileSystemLoader
-from datetime import datetime
+from datetime import datetime, timezone
 from app.core.config import settings, Logger
 
 class MailService:
@@ -68,7 +68,7 @@ class MailService:
             'otp': otp,  # Send plain OTP in the email body
             'expiration_time': expiration_time.strftime("%Y-%m-%d %H:%M:%S UTC"),
             'ip_address': ip_address,
-            'server_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC"),
+            'server_time': datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             'company_name': settings.APP_NAME,
         }
 

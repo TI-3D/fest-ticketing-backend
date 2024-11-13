@@ -11,7 +11,7 @@ from alembic import op
 import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
 from faker import Faker
-from datetime import datetime
+from datetime import datetime, timezone
 from app.core.security import generate_password_hash
 # revision identifiers, used by Alembic.
 revision: str = 'e71a35a89034'
@@ -70,7 +70,7 @@ def upgrade() -> None:
         password_hash = generate_password_hash('password123')
         profile_picture = fake.image_url()
         email_verified_at = fake.date_this_decade()
-        created_at = updated_at = datetime.now()
+        created_at = updated_at = datetime.now(timezone.utc)
 
         # Insert generated fake user data into the `users` table
         op.execute(f"""

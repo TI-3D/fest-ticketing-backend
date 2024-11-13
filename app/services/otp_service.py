@@ -5,7 +5,7 @@ from app.core.security import create_jwt_token, verify_jwt_token
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from app.services.mail_service import MailService
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.schemas.otp import VerifyOtpRequest
 import random
 
@@ -28,9 +28,9 @@ class OTPService:
                 raise HTTPException(status_code=404, detail="User not found")
             await self.delete_expired_otps()  # Delete expired OTPs
             otp_code = self.generate_otp()  # Generate OTP
-            expires_at = datetime.now() + timedelta(minutes=5)  # OTP expiration time
+            expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)  # OTP expiration time
             hashed_otp = create_jwt_token({"user_id": user_id, "otp": otp_code}, expires_at=expires_at)  # Generate hashed OTP
-            otp = OTP(user_id=user_id, otp_code=otp_code, hashed_otp=hashed_otp, created_at=datetime.now(), expires_at=expires_at)
+            otp = OTP(user_id=user_id, otp_code=otp_code, hashed_otp=hashed_otp, created_at=datetime.now(timezone.utc), expires_at=expires_at)
 
             # No transaction handling here, let the service handle that
             await self.otp_repository.upsert(otp)
@@ -54,7 +54,7 @@ class OTPService:
             if not otp:
                 raise HTTPException(status_code=400, detail="Invalid OTP")
             
-            if otp.expires_at < datetime.now():
+            if otp.expires_at < datetime.now(timezone.utc):
                 raise HTTPException(status_code=400, detail="OTP has expired")
             
             if otp.user_id != user_id:

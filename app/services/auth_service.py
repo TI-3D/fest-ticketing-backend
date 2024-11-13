@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import User, PersonalAccessToken, Provider, ProviderName
 from app.repositories import UserRepository, PersonalAccessTokenRepository,ProviderRepository
@@ -104,7 +104,7 @@ class AuthService:
                 raise HTTPException(status_code=400, detail="Invalid or expired OTP")
 
             # Mark the email as verified after successful OTP verification
-            updated_data = {"email_verified_at": datetime.now()}
+            updated_data = {"email_verified_at": datetime.now(timezone.utc)}
             await self.user_repository.update(user.user_id, updated_data)
 
             return VerifyOtpResponse(
@@ -136,16 +136,18 @@ class AuthService:
                 "email": user.email,
                 "role": str(user.role)
             }
+            
+            expire_in = timedelta(seconds=20)
 
-            jwt_token = create_jwt_token(payload)
+            jwt_token = create_jwt_token(payload, expire_in)
 
             # Generate a personal access token for the user
             token = PersonalAccessToken(
                 user_id=user.user_id,
                 device_id=signin_data.device_id,
                 access_token=jwt_token,
-                created_at=datetime.now(),
-                expires_at=datetime.now() + timedelta(days=settings.ACCESS_TOKEN_EXPIRE_DAYS)
+                created_at=datetime.now(timezone.utc),
+                expires_at=datetime.now(timezone.utc) + expire_in
             )
             await self.personal_access_token.create_token(token)
             return SigninResponse(
@@ -157,25 +159,26 @@ class AuthService:
                     "access_token": {
                         "token": token.access_token,
                         "token_type": "Bearer",
-                        "expires_in": int((token.expires_at - datetime.now()).total_seconds())
+                        "expires_in": int((token.expires_at - datetime.now(timezone.utc)).total_seconds())
                     }
                 }
                 
             )
             
-    async def get_current_user(self, token: str) -> ResponseSuccess:
+    async def get_current_user(self, access_token: str) -> ResponseSuccess:
         """
         Get the current user based on the personal access token.
         """
         async with self.session.begin():
-            personal_token = await self.personal_access_token.get_token_by_token(token)
-            if not personal_token:
-                raise HTTPException(status_code=400, detail="Invalid credentials")
-            verify_token = verify_jwt_token(personal_token.access_token)
+            # personal_token = await self.personal_access_token.get_token_by_token(token)
+            # if not personal_token:
+            #     raise HTTPException(status_code=400, detail="Invalid credentials")
+            verify_token = verify_jwt_token(access_token)
+            print("Token : ", verify_token)
             user_id = verify_token.get("user_id")
             user = await self.user_repository.get_user_by_id(user_id)
             if not user:
-                raise HTTPException(status_code=400, detail="User not found")
+                raise HTTPException(status_code=401, detail="User not found")
             
             return ResponseSuccess(
                 message="User found",

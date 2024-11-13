@@ -17,7 +17,7 @@ dependencies = [
     # Pin bcrypt until passlib supports the latest
     "bcrypt==4.2.0",
     "pydantic-settings>=2.5.2,<3.0.0",
-    "pyjwt<3.0.0,>=2.9.0",
+    "pyjwt>=2.9.0,<3.0.0",
     "opencv-python>=4.10.0.84",
     "ruff>=0.6.8",
     "google-auth>=2.35.0",

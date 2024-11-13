@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional, List, Dict
 
 class ErrorDetail(BaseModel):
@@ -8,7 +8,7 @@ class ErrorDetail(BaseModel):
 
 class ResponseModel(BaseModel):
     message: str
-    timestamp: Optional[datetime] = datetime.now()
+    timestamp: Optional[datetime] = datetime.now(timezone.utc)
     
     
     def model_dump(self, *args, **kwargs):
