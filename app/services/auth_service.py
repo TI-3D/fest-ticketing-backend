@@ -145,7 +145,7 @@ class AuthService:
                 device_id=signin_data.device_id,
                 access_token=jwt_token,
                 created_at=datetime.now(timezone.utc),
-                expires_at=datetime.now(timezone.utc) + timedelta(seconds=settings.ACCESS_TOKEN_EXPIRE_SECONDS)
+                expires_at=datetime.now(timezone.utc) + timedelta(seconds=settings.ACCESS_TOKEN_EXPIRE_DAYS)
             )
             await self.personal_access_token.create_token(token)
             return SigninResponse(
