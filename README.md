@@ -1,8 +1,4 @@
-<a name="readme-top"></a>
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
+
 
 <br />
 <div align="center">
@@ -42,7 +38,7 @@
 <!-- ABOUT THE PROJECT -->
 <h2 id="about-the-project">💡 About The Project</h2>
 
-[![Product Name Screen Shot](public/assets/images/homescreen-screenshot.png)](public/assets/images/homescreen-screenshot.png)
+<!-- [![Product Name Screen Shot](public/assets/images/homescreen-screenshot.png)](public/assets/images/homescreen-screenshot.png) -->
 
 The Fest Ticketing App is designed to facilitate ticket sales and management for various events. This backend application handles ticket bookings, user authentication, event creation, and payment processing, ensuring a seamless experience for both attendees and organizers.
 
@@ -90,7 +86,7 @@ You will need to install the following:
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/raihanachmad8/fest-ticketing-backend
+    git clone https://github.com/raihanachmad8/ngefastapi
     ```
 
 2. Navigate to the project directory:
@@ -132,7 +128,125 @@ You will need to install the following:
     uvicorn app.main:app --reload
     ```
 
+
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+### Running with Docker
+
+Docker provides a simple way to set up and run the application. Follow the steps below to choose the option that best fits your needs:
+
+#### Prerequisites
+
+1. Ensure **Docker** and **Docker Compose** are installed on your machine.  
+   - [Install Docker](https://docs.docker.com/get-docker/)
+   - [Install Docker Compose](https://docs.docker.com/compose/install/)
+
+2. Verify Docker and Docker Compose are correctly installed by running:
+
+    ```bash
+    docker --version
+    docker-compose --version
+    ```
+
+3. Create a custom Docker network for the application:
+
+    ```bash
+    docker network create app-network
+    ```
+
+#### Option 1: Run Everything Together
+
+This option starts all services (application, database, and any additional components) defined in the main `docker-compose.yml` file.
+
+1. Build and start all services:
+
+    ```bash
+    docker compose up -d --build
+    ```
+
+2. Access the application in your browser at:
+
+    - **API**: [http://localhost:80](http://localhost:80)  
+    - **API Docs**: [http://localhost:80/docs](http://localhost:80/docs)
+
+3. Stop the containers when you're done:
+
+    ```bash
+    docker compose down
+    ```
+
+---
+
+#### Option 2: Run Only the Application Services
+
+Use this option if you want to run just the application without the database. This is useful if the database is already hosted elsewhere.
+
+1. Build and start the application services:
+
+    ```bash
+    docker compose -f "docker-compose-app.yml" up -d --build
+    ```
+
+2. Access the application at the same endpoints as above:
+
+    - **API**: [http://localhost:80](http://localhost:80)  
+    - **API Docs**: [http://localhost:80/docs](http://localhost:80/docs)
+
+3. Stop the containers:
+
+    ```bash
+    docker compose -f "docker-compose-app.yml" down
+    ```
+
+---
+
+#### Option 3: Run Database and Application Separately
+
+This option gives you more control, allowing you to start the database and the application independently.
+
+1. Start the database container using `docker-compose-db.yml`:
+
+    ```bash
+    docker compose -f "docker-compose-db.yml" up -d --build
+    ```
+
+2. Verify that the database container is running:
+
+    ```bash
+    docker ps
+    ```
+
+3. Start the application container:
+
+    ```bash
+    docker compose -f "docker-compose-app.yml" up -d --build
+    ```
+
+4. Access the application:
+
+    - **API**: [http://localhost:80](http://localhost:80)  
+    - **API Docs**: [http://localhost:80/docs](http://localhost:80/docs)
+
+5. Stop the containers:
+
+    ```bash
+    docker compose -f "docker-compose-app.yml" down
+    docker compose -f "docker-compose-db.yml" down
+    ```
+
+---
+
+#### Notes
+
+- **Custom Network**: The `app-network` is used to connect the app and database containers. Ensure this network exists before running the commands.
+- **Environment Variables**: Make sure the `.env` file contains the correct environment variables for your database and application.
+
+By following these steps, you can choose the Docker setup that works best for your project!
+
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 
 ## Usage
 
@@ -155,14 +269,6 @@ Contributions are what make the open-source community such an amazing place to l
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-[contributors-shield]: https://img.shields.io/github/contributors/raihanachmad8/fest-ticketing-backend.svg?style=for-the-badge
-[contributors-url]: https://github.com/raihanachmad8/fest-ticketing-backend/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/raihanachmad8/fest-ticketing-backend.svg?style=for-the-badge
-[forks-url]: https://github.com/raihanachmad8/fest-ticketing-backend/network/members
-[stars-shield]: https://img.shields.io/github/stars/raihanachmad8/fest-ticketing-backend.svg?style=for-the-badge
-[stars-url]: https://github.com/raihanachmad8/fest-ticketing-backend/stargazers
-[issues-shield]: https://img.shields.io/github/issues/raihanachmad8/fest-ticketing-backend.svg?style=for-the-badge
-[issues-url]: https://github.com/raihanachmad8/fest-ticketing-backend/issues
 [FastAPI.com]: https://img.shields.io/badge/FastAPI-005571?logo=fastapi
 [FastAPI-url]: https://fastapi.tiangolo.com/
 [MongoDB.com]: https://img.shields.io/badge/MongoDB-47A248?logo=mongodb

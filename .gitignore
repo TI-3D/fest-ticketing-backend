@@ -10,4 +10,4 @@ htmlcov
 .env.production
 .env.test
 app.log
-docker/mognodb/data
+docker/postgres/data

@@ -48,7 +48,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync
 
 # Expose port 8000
-EXPOSE 8000
+EXPOSE 80
 
 # Start FastAPI with uvicorn and set to use 4 workers
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80", "--workers", "4"]
