@@ -54,10 +54,11 @@ app.add_middleware(AuthenticationMiddleware)
 # handle 422 error
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError | ValueError):
+    msg = exc.errors()[0]['msg']
     return JSONResponse(
         status_code=422,
         content=ResponseError(
-            message="Validation Error",
+            message=f"Validation Error: {msg.split(',')[1].strip()}",
             errors=get_error_details(exc)
         ).model_dump()
     )
