@@ -47,8 +47,14 @@ COPY .env /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync
 
-# Expose port 8000
-EXPOSE 80
+# # Expose port 80
+# EXPOSE 80  
+
+# # Start FastAPI with uvicorn and set to use 4 workers
+# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80", "--workers", "4"]
+
+# Expose port 443
+EXPOSE 443  
 
 # Start FastAPI with uvicorn and set to use 4 workers
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80", "--workers", "4"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "443", "--workers", "4", "--ssl-keyfile", "/etc/ssl/private/server.key", "--ssl-certfile", "/etc/ssl/private/server.pem"]
