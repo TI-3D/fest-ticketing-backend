@@ -31,7 +31,7 @@ services:
       context: .
     container_name: fastapi
     depends_on:
-      - postgres
+    - postgres
     ports:
       - "8080:8080"
     networks:
