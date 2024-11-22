@@ -1,8 +1,8 @@
 from sqlmodel import SQLModel, Field, Relationship
 from enum import Enum
 from datetime import datetime
-from uuid import uuid4
-from typing import List, Dict, Any
+from uuid import uuid4, UUID
+from typing import List, Dict, Any, Optional
 
 class Role(Enum):
     ADMIN = "Admin"
@@ -30,7 +30,7 @@ class Gender(Enum):
 class User(SQLModel, table=True):
     __tablename__ = 'users'
 
-    user_id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    user_id: UUID = Field(default_factory=lambda: str(uuid4()), primary_key=True)
     full_name: str = Field(nullable=False)
     email: str = Field(nullable=False, unique=True)
     gender: Gender = Field(nullable=True)
@@ -40,7 +40,6 @@ class User(SQLModel, table=True):
     address: str = Field(default=None, max_length=100, nullable=True)
     role: Role = Field(default=Role.USER)
     status: UserStatus = Field(default=UserStatus.BASIC,)
-    provider_id: str = Field(default=None, nullable=True)  # ID pengguna dari penyedia eksternal (misalnya, Google ID)
     password_hash: str = Field(nullable=False, max_length=255)
     
     profile_picture: str = Field(default=None, nullable=True)
@@ -53,6 +52,8 @@ class User(SQLModel, table=True):
     providers: List["Provider"] = Relationship(back_populates="user")
     otp: List["OTP"] = Relationship(back_populates="user")
     personal_access_tokens: List["PersonalAccessToken"] = Relationship(back_populates="user")
+    # One-to-One Relationship
+    organizer: Optional["EventOrganizer"] = Relationship(back_populates="user")
     
     def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
         data = super().model_dump(*args, **kwargs)  # Use dict() as an alternative for serialization

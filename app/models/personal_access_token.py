@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from sqlmodel import Field, SQLModel, Relationship
+from uuid import UUID
 
 
 class PersonalAccessToken(SQLModel, table=True):
@@ -9,7 +10,7 @@ class PersonalAccessToken(SQLModel, table=True):
     token_id: Optional[int] = Field(default=None, primary_key=True)
     device_id: Optional[str] = Field(default=None)
     access_token: str = Field(index=True, nullable=False, unique=True)
-    user_id: str = Field(foreign_key="users.user_id", nullable=False)
+    user_id: UUID = Field(foreign_key="users.user_id", nullable=False)
     created_at: datetime = Field(default=datetime.now)
     expires_at: datetime = Field(nullable=False)
 
