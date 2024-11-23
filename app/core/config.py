@@ -14,7 +14,11 @@ class Settings(BaseSettings):
     DB_HOST: str = "localhost"
     DB_PORT: int = 3306
     DB_NAME: str  = "fest_ticketing"
-
+    
+    CLOUDINARY_CLOUD_NAME: str
+    CLOUDINARY_API_KEY: str
+    CLOUDINARY_API_SECRET: str
+    
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         """
