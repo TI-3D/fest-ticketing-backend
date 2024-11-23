@@ -87,6 +87,7 @@ async def signin(
         logger.warning(f"Signin failed for {request.email}: {str(e)}")
         raise HTTPException(status_code=e.status_code, detail=str(e.detail))
     except Exception as e:
+        print(e)
         logger.error(f"Unexpected error during signin for {request.email}: {str(e)}")
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
     

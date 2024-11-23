@@ -134,7 +134,7 @@ class AuthService:
             payload = {
                 "user_id": user.user_id,
                 "email": user.email,
-                "role": str(user.role)
+                "role": user.role
             }
 
             jwt_token = create_jwt_token(payload)

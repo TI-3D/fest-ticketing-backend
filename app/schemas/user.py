@@ -74,7 +74,7 @@ class UserUpdate(BaseModel):
     phone_number: Optional[str]
     NIK: Optional[str]
     address: Optional[str]
-    role: Optional[Role]
+    role: Optional[Role]    
     status: Optional[UserStatus]
 
     @field_validator('full_name')

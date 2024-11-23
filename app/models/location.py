@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import List
+from typing import List, Dict, Any
 
 # Province Model
 class Province(SQLModel, table=True):
@@ -9,7 +9,22 @@ class Province(SQLModel, table=True):
     name_province: str
     cities: List["City"] = Relationship(back_populates="province")
     organizers: List["EventOrganizer"] = Relationship(back_populates="province")
-    events: List["Event"] = Relationship(back_populates="province")  # back_populates should match 'province' in Event
+    events: List["Event"] = Relationship(back_populates="province") 
+    
+    def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
+        data = super().model_dump(*args, **kwargs)  # Use dict() as an alternative for serialization
+        # Convert datetime fields to string
+        for field, value in data.items():
+            if isinstance(value, datetime):
+                # Convert datetime to ISO 8601 string format
+                data[field] = value.isoformat()
+            elif isinstance(value, Enum):
+                # Convert Enum to string
+                data[field] = str(value)
+            elif isinstance(value, UUID):
+                # Convert UUID to string
+                data[field] = str(value)
+        return data
 
 # City Model
 class City(SQLModel, table=True):
@@ -22,6 +37,21 @@ class City(SQLModel, table=True):
     districts: List["District"] = Relationship(back_populates="city")
     organizers: List["EventOrganizer"] = Relationship(back_populates="city")
     events: List["Event"] = Relationship(back_populates="city")  # back_populates should match 'city' in Event
+    
+    def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
+        data = super().model_dump(*args, **kwargs)  # Use dict() as an alternative for serialization
+        # Convert datetime fields to string
+        for field, value in data.items():
+            if isinstance(value, datetime):
+                # Convert datetime to ISO 8601 string format
+                data[field] = value.isoformat()
+            elif isinstance(value, Enum):
+                # Convert Enum to string
+                data[field] = str(value)
+            elif isinstance(value, UUID):
+                # Convert UUID to string
+                data[field] = str(value)
+        return data
 
 # District Model
 class District(SQLModel, table=True):
@@ -34,6 +64,21 @@ class District(SQLModel, table=True):
     villages: List["Village"] = Relationship(back_populates="district")
     organizers: List["EventOrganizer"] = Relationship(back_populates="district")
     events: List["Event"] = Relationship(back_populates="district")  # back_populates should match 'district' in Event
+    
+    def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
+        data = super().model_dump(*args, **kwargs)  # Use dict() as an alternative for serialization
+        # Convert datetime fields to string
+        for field, value in data.items():
+            if isinstance(value, datetime):
+                # Convert datetime to ISO 8601 string format
+                data[field] = value.isoformat()
+            elif isinstance(value, Enum):
+                # Convert Enum to string
+                data[field] = str(value)
+            elif isinstance(value, UUID):
+                # Convert UUID to string
+                data[field] = str(value)
+        return data
 
 # Village Model
 class Village(SQLModel, table=True):
@@ -45,3 +90,18 @@ class Village(SQLModel, table=True):
     district: District = Relationship(back_populates="villages")
     organizers: List["EventOrganizer"] = Relationship(back_populates="village")
     events: List["Event"] = Relationship(back_populates="village")  # back_populates should match 'village' in Event
+    
+    def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
+        data = super().model_dump(*args, **kwargs)  # Use dict() as an alternative for serialization
+        # Convert datetime fields to string
+        for field, value in data.items():
+            if isinstance(value, datetime):
+                # Convert datetime to ISO 8601 string format
+                data[field] = value.isoformat()
+            elif isinstance(value, Enum):
+                # Convert Enum to string
+                data[field] = str(value)
+            elif isinstance(value, UUID):
+                # Convert UUID to string
+                data[field] = str(value)
+        return data

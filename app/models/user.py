@@ -65,4 +65,7 @@ class User(SQLModel, table=True):
             elif isinstance(value, Enum):
                 # Convert Enum to string
                 data[field] = str(value)
+            elif isinstance(value, UUID):
+                # Convert UUID to string
+                data[field] = str(value)
         return data

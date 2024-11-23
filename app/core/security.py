@@ -35,7 +35,7 @@ def create_jwt_token(data: dict, expires_in: timedelta = None) -> str:
     """
     Membuat token JWT dengan data payload dan waktu kadaluarsa opsional.
     """
-    to_encode = data.copy()
+    to_encode = {key: str(value) for key, value in data.items()}
     
     if expires_in:
         expire = datetime.now(timezone.utc) + expires_in  # Gunakan waktu UTC

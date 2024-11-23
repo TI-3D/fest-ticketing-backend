@@ -2,7 +2,7 @@ from sqlmodel import Field, SQLModel, Relationship
 from datetime import datetime
 from uuid import UUID, uuid4
 from enum import Enum
-from typing import List
+from typing import List, Dict, Any
 from app.models.event_category_association import EventCategoryAssociation
 
 class EventStatus(str, Enum):
@@ -10,6 +10,9 @@ class EventStatus(str, Enum):
     ACTIVE = "ACTIVE"
     CANCELLED = "CANCELLED"
     COMPLETED = "COMPLETED"
+    
+    def __str__(self):
+        return self.value
 
 class Event(SQLModel, table=True):
     __tablename__ = "events"
@@ -41,3 +44,18 @@ class Event(SQLModel, table=True):
     )
     event_classes: List["EventClass"] = Relationship(back_populates="event")
     images: List["EventImage"] = Relationship(back_populates="event")
+    
+    def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
+        data = super().model_dump(*args, **kwargs)  # Use dict() as an alternative for serialization
+        # Convert datetime fields to string
+        for field, value in data.items():
+            if isinstance(value, datetime):
+                # Convert datetime to ISO 8601 string format
+                data[field] = value.isoformat()
+            elif isinstance(value, Enum):
+                # Convert Enum to string
+                data[field] = str(value)
+            elif isinstance(value, UUID):
+                # Convert UUID to string
+                data[field] = str(value)
+        return data

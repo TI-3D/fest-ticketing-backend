@@ -2,13 +2,16 @@ from sqlmodel import Field, SQLModel, Relationship
 from uuid import UUID, uuid4
 from enum import Enum
 from datetime import datetime
-from typing import List
+from typing import List, Dict, Any
 
 # Enum for Organizer Status
 class OrganizerStatus(str, Enum):
     PENDING = "Pending"
     ACTIVE = "Active"
     INACTIVE = "Inactive"
+    
+    def __str__(self):
+        return self.value
 
 # Event Organizer Model
 class EventOrganizer(SQLModel, table=True):
@@ -34,3 +37,18 @@ class EventOrganizer(SQLModel, table=True):
     village: "Village" = Relationship(back_populates="organizers")
     user: "User" = Relationship(back_populates="organizer")
     events: List["Event"] = Relationship(back_populates="organizer")
+    
+    def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
+        data = super().model_dump(*args, **kwargs)  # Use dict() as an alternative for serialization
+        # Convert datetime fields to string
+        for field, value in data.items():
+            if isinstance(value, datetime):
+                # Convert datetime to ISO 8601 string format
+                data[field] = value.isoformat()
+            elif isinstance(value, Enum):
+                # Convert Enum to string
+                data[field] = str(value)
+            elif isinstance(value, UUID):
+                # Convert UUID to string
+                data[field] = str(value)
+        return data
