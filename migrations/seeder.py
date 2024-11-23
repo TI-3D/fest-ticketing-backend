@@ -1,7 +1,7 @@
 from app.core.config import settings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from migrations.seeders.user_seeder import create_user_admin, create_user_test, create_users, create_event_organizer, delete_all_users
+from migrations.seeders.user_seeder import create_user_admin, create_user_test, create_users, create_event_organizer, create_event_organizer_test, delete_all_users
 from migrations.seeders.event_category_seeder import create_event_categories, delete_all_event_categories
 from migrations.seeders.location_seeder import generate_location_data, delete_all_locations
 from migrations.seeders.event_seeder import create_events, delete_all_events
@@ -26,6 +26,7 @@ def seed_db():
         create_user_admin(db)
         create_user_test(db)
         create_users(db, 5)  # Create 5 random users
+        create_event_organizer_test(db)
         create_event_organizer(db, 5)  # Create 5 random event organizers
         
         # Event category seeder
