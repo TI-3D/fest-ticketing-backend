@@ -40,7 +40,7 @@ ENV PYTHONPATH=/app
 COPY ./app /app/app
 
 # COPY environment variables
-COPY .env /app
+COPY .env.production /app/.env
 
 # Sync the project dependencies
 # Reference: https://docs.astral.sh/uv/guides/integration/docker/#intermediate-layers
@@ -49,6 +49,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Expose port 8080
 EXPOSE 8080  
+
+# Copy the alembic.ini file
+COPY ./alembic.ini /app
 
 # Start FastAPI with uvicorn and set to use 4 workers
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "4"]

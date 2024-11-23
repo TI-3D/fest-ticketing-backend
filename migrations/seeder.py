@@ -23,9 +23,9 @@ def seed_db():
         generate_location_data(db)
         
         # User seeders
-        # create_user_admin(db)
-        # create_user_test(db)
-        # create_users(db, 5)  # Create 5 random users
+        create_user_admin(db)
+        create_user_test(db)
+        create_users(db, 5)  # Create 5 random users
         create_event_organizer(db, 5)  # Create 5 random event organizers
         
         # Event category seeder
