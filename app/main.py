@@ -7,7 +7,7 @@ from fastapi.exceptions import RequestValidationError, HTTPException
 from app.utils.get_error_details import get_error_details
 from app.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.middleware import (LoggingMiddleware, AuthenticationMiddleware, RoutingMiddleware)
+from app.core.middleware import LoggingMiddleware, AuthenticationMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
@@ -49,7 +49,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(LoggingMiddleware)
-app.add_middleware(RoutingMiddleware)
 app.add_middleware(AuthenticationMiddleware)
 
 # handle 422 error
