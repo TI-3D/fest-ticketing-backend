@@ -75,6 +75,9 @@ class Settings(BaseSettings):
         "/api/v1/auth/google-signin", 
         "/api/v1/auth/send-otp",
         "/api/v1/auth/verification",
+        
+        
+        "/api/v1/location/provinces",
         ]
     
     class Config:

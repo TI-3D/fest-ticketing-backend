@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from datetime import datetime, timezone
 from typing import Any, Optional, List, Dict
+from enum import Enum
+from uuid import UUID
 
 class ErrorDetail(BaseModel):
     field: str
@@ -16,12 +18,13 @@ class ResponseModel(BaseModel):
         if isinstance(model_dict.get("timestamp"), datetime):
             model_dict["timestamp"] = model_dict["timestamp"].isoformat()
         return model_dict
+    
     class Config:
         from_attributes = True
         exlude_none = True
 
 class ResponseSuccess(ResponseModel):
-    data: Optional[Dict[str, Any]] = None
+    data: Optional[Any] = None
     
     class Config:
         from_attributes = True

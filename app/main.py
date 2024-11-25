@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from app.schemas.response import ResponseError, ResponseModel
 from app.api.v1.endpoints.auth import router as auth_router
+from app.api.v1.endpoints.location import router as location_router
 from fastapi.exceptions import RequestValidationError, HTTPException
 from app.utils.get_error_details import get_error_details
 from app.core.config import settings
@@ -93,6 +94,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 # Include user and auth routes
 app.include_router(auth_router, prefix=settings.API_V1 + "auth", tags=["Authentication"])
+app.include_router(location_router, prefix=settings.API_V1 + "location", tags=["Location"])
 
 @app.get("/", response_model=ResponseModel)
 async def root():
