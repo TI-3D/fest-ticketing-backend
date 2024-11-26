@@ -1,8 +1,8 @@
-"""add organization and event image and location
+"""create table event, category class, schedule and event image
 
-Revision ID: 6fc9d019fa59
-Revises: 78695486055f
-Create Date: 2024-11-22 21:25:04.424045
+Revision ID: df108ad02884
+Revises: 4e992fd6cef9
+Create Date: 2024-11-27 01:01:01.054470
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
 
 # revision identifiers, used by Alembic.
-revision: str = '6fc9d019fa59'
-down_revision: Union[str, None] = '78695486055f'
+revision: str = 'df108ad02884'
+down_revision: Union[str, None] = '4e992fd6cef9'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -23,50 +23,6 @@ def upgrade() -> None:
     op.create_table('event_categories',
     sa.Column('category_name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.PrimaryKeyConstraint('category_name')
-    )
-    op.create_table('provinces',
-    sa.Column('code_province', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('name_province', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.PrimaryKeyConstraint('code_province')
-    )
-    op.create_table('cities',
-    sa.Column('code_city', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('name_city', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('code_province', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.ForeignKeyConstraint(['code_province'], ['provinces.code_province'], ),
-    sa.PrimaryKeyConstraint('code_city')
-    )
-    op.create_table('districts',
-    sa.Column('code_district', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('name_district', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('code_city', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.ForeignKeyConstraint(['code_city'], ['cities.code_city'], ),
-    sa.PrimaryKeyConstraint('code_district')
-    )
-    op.create_table('villages',
-    sa.Column('code_village', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('name_village', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('code_district', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.ForeignKeyConstraint(['code_district'], ['districts.code_district'], ),
-    sa.PrimaryKeyConstraint('code_village')
-    )
-    op.create_table('eventorganizers',
-    sa.Column('organizer_id', sa.Uuid(), nullable=False),
-    sa.Column('company_name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('company_address', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('status', sa.Enum('PENDING', 'ACTIVE', 'INACTIVE', name='organizerstatus'), nullable=False),
-    sa.Column('user_id', sa.Uuid(), nullable=False),
-    sa.Column('verified_at', sa.DateTime(), nullable=False),
-    sa.Column('code_province', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('code_city', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('code_district', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('code_village', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.ForeignKeyConstraint(['code_city'], ['cities.code_city'], ),
-    sa.ForeignKeyConstraint(['code_district'], ['districts.code_district'], ),
-    sa.ForeignKeyConstraint(['code_province'], ['provinces.code_province'], ),
-    sa.ForeignKeyConstraint(['code_village'], ['villages.code_village'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['users.user_id'], ),
-    sa.PrimaryKeyConstraint('organizer_id')
     )
     op.create_table('events',
     sa.Column('event_id', sa.Uuid(), nullable=False),
@@ -79,6 +35,8 @@ def upgrade() -> None:
     sa.Column('code_city', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('code_district', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('code_village', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['code_city'], ['cities.code_city'], ),
     sa.ForeignKeyConstraint(['code_district'], ['districts.code_district'], ),
     sa.ForeignKeyConstraint(['code_province'], ['provinces.code_province'], ),
@@ -130,15 +88,8 @@ def downgrade() -> None:
     op.drop_table('event_class')
     op.drop_table('event_category_association')
     op.drop_table('events')
-    op.drop_table('eventorganizers')
-    op.drop_table('villages')
-    op.drop_table('districts')
-    op.drop_table('cities')
-    op.drop_table('provinces')
     op.drop_table('event_categories')
     
     op.execute("DROP TYPE IF EXISTS eventstatus")
-    op.execute("DROP TYPE IF EXISTS organizerstatus")
     op.execute("DROP TYPE IF EXISTS dayofweek")
-    
     # ### end Alembic commands ###

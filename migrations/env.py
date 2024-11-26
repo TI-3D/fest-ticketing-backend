@@ -11,16 +11,16 @@ config = context.config
 from app.core.config import settings # noqa
 
 # Import the models so that Alembic can see them
+from app.models.location import Province, District, City, Village
 from app.models.user import User
 from app.models.provider import Provider
 from app.models.otp import OTP
 from app.models.personal_access_token import PersonalAccessToken
-from app.models.location import Province, District, City, Village
 from app.models.event_organizer import EventOrganizer
+from app.models.event import Event
 from app.models.event_category import EventCategories
 from app.models.event_class import EventClass
 from app.models.schedules import Schedule
-from app.models.event import Event
 from app.models.event_image import EventImage
 
 

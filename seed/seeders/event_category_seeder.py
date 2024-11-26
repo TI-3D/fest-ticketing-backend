@@ -3,26 +3,17 @@ from sqlalchemy.orm import Session
 
 def create_event_categories(session: Session):
     list_event_categories = [
-        "Music & Concerts", 
-        "Food & Drink Festivals", 
-        "Business & Entrepreneurship", 
-        "Health & Wellness", 
-        "Science & Technology", 
-        "Travel & Adventure", 
-        "Charity & Social Causes", 
-        "Community & Networking", 
-        "Family & Educational Events", 
-        "Fashion & Style", 
-        "Film, Media & Entertainment", 
-        "Government & Politics", 
-        "Hobbies & Craftsmanship", 
-        "Holiday & Seasonal Celebrations", 
-        "Home, Lifestyle & Design", 
-        "Performing & Visual Arts", 
-        "School & Academic Activities", 
-        "Spiritual & Religious Gatherings", 
-        "Sports & Fitness Competitions", 
-        "Automotive, Boat & Air Shows"
+        "Music",
+        "Comedy",
+        "Business",
+        "Health", 
+        "Festivals",
+        "Entrepreneurship", 
+        "Technology", 
+        "Community", 
+        "Networking", 
+        "Fashion", 
+        "Education",
     ]
 
     
