@@ -1,13 +1,12 @@
-version: '3.8'
-
-fastapi:
-    build:
-      context: .
-    container_name: fastapi
-    ports:
-      - "8080:8080"
-    networks:
-      - app-network
+services:
+  fastapi:
+      build:
+        context: .
+      container_name: fastapi
+      ports:
+        - "8080:8080"
+      networks:
+        - app-network
 
 networks:
   app-network:
