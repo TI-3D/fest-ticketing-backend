@@ -80,7 +80,7 @@ async def signin(
     logger.debug(f"Received signin request for email: {request.email}")
     
     try:
-        signin_response = await auth_service.siwnin(request)
+        signin_response = await auth_service.signin(request)
         logger.info(f"User signed in successfully: {request.email}")
         return JSONResponse(content=signin_response.model_dump(), status_code=200)
     except HTTPException as e:
