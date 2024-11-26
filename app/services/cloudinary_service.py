@@ -1,86 +1,111 @@
 import cloudinary
+from cloudinary.uploader import upload
+from cloudinary.api import delete_resources_by_prefix
 from app.core.config import settings
 
 class CloudinaryService:
     def __init__(self):
-        # Konfigurasi Cloudinary
-        self.cloudinary = cloudinary
-        self.cloudinary.config(
+        cloudinary.config(
             cloud_name=settings.CLOUDINARY_CLOUD_NAME,
             api_key=settings.CLOUDINARY_API_KEY,
             api_secret=settings.CLOUDINARY_API_SECRET
         )
-    
-    def upload(self, file_path, options=None, width=None, height=None):
+
+    def upload_image(self, file_path, folder_name=None, width=None, height=None, crop=None, options=None):
         """
-        Upload gambar dengan ID acak dan optimasi untuk perangkat mobile,
-        serta menentukan lebar dan tinggi gambar.
-        :param file_path: Lokasi file gambar yang ingin di-upload.
-        :param options: Opsi tambahan untuk upload (misalnya folder, public_id, dll.).
-        :param width: Lebar gambar yang diinginkan (opsional).
-        :param height: Tinggi gambar yang diinginkan (opsional).
-        :return: Response dari Cloudinary setelah upload.
+        Upload an image to Cloudinary with optional transformations.
+        :param file_path: Path to the image file.
+        :param folder_name: The folder to upload the image to.
+        :param width: The width of the image (optional).
+        :param height: The height of the image (optional).
+        :param crop: The crop mode (optional).
+        :param options: Additional options for uploading.
+        :return: Cloudinary upload response.
         """
         if options is None:
             options = {}
 
-        # Menambahkan optimasi gambar untuk perangkat mobile
-        options.update({
-            'quality': 'auto',             # Kualitas otomatis (kompresi gambar)
-            'fetch_format': 'auto',        # Format gambar otomatis (misalnya WebP)
-            'dpr': 'auto',                 # Menyesuaikan resolusi gambar untuk perangkat dengan densitas tinggi
-            'aspect_ratio': '16:9',        # Memastikan rasio aspek tetap konsisten
-            'background': 'auto',          # Menjaga latar belakang gambar tetap transparan (jika ada)
-            'public_id': cloudinary.utils.random_public_id()  # Generate public_id acak
-        })
+        # Only add background if using a crop mode that supports it
+        if crop in ['fill', 'pad']:
+            options['background'] = 'auto'
 
-        # Menentukan ukuran lebar dan tinggi jika ada
+        # Add image transformations (optional)
         if width:
             options['width'] = width
         if height:
             options['height'] = height
-        
+        if crop:
+            options['crop'] = crop
+
+        if folder_name:
+            options['folder'] = folder_name
+
         try:
-            # Upload gambar ke Cloudinary dengan opsi yang telah ditentukan
-            response = self.cloudinary.uploader.upload(file_path, **options)
-            return response
+            # Upload the image to Cloudinary
+            response = upload(file_path, **options)
+            return response  # Return the Cloudinary response
         except cloudinary.exceptions.Error as e:
             print(f"Error uploading image: {e}")
             return None
 
-    def get_mobile_optimized_url(self, public_id, width=None, height=None):
+    def get_optimized_url(self, public_id, width=None, height=None):
         """
-        Mendapatkan URL gambar yang dioptimalkan untuk perangkat mobile,
-        serta menentukan lebar dan tinggi gambar sesuai kebutuhan.
-        :param public_id: ID unik gambar yang telah di-upload ke Cloudinary.
-        :param width: Lebar gambar yang diinginkan (opsional).
-        :param height: Tinggi gambar yang diinginkan (opsional).
-        :return: URL Cloudinary yang dioptimalkan untuk perangkat mobile.
+        Get an optimized URL for the image.
+        :param public_id: The Cloudinary public ID of the image.
+        :param width: The width (optional).
+        :param height: The height (optional).
+        :return: Optimized URL for the image.
         """
         options = {
-            'quality': 'auto',             # Kualitas otomatis
-            'fetch_format': 'auto',        # Format gambar otomatis (misalnya WebP)
-            'dpr': 'auto',                 # Menyesuaikan resolusi untuk perangkat dengan densitas tinggi
+            'quality': 'auto',
+            'fetch_format': 'auto',
+            'dpr': 'auto',
         }
 
-        # Menentukan lebar dan tinggi jika ada
         if width:
             options['width'] = width
         if height:
             options['height'] = height
-        
-        return self.cloudinary.utils.cloudinary_url(public_id, **options, secure=True)
 
-    def delete_image(self, public_id):
+        # Generate the URL
+        return cloudinary.utils.cloudinary_url(public_id, **options, secure=True)
+
+    def delete_image(self, public_id, folder_name=None):
         """
-        Menghapus gambar dari Cloudinary berdasarkan public_id.
-        :param public_id: ID unik gambar yang ingin dihapus.
-        :return: Response dari Cloudinary setelah penghapusan.
+        Delete an image from Cloudinary using the public ID.
+        :param public_id: The Cloudinary public ID of the image.
+        :param folder_name: The folder where the image is stored (optional).
+        :return: Cloudinary deletion response.
         """
         try:
-            # Menghapus gambar berdasarkan public_id
-            response = self.cloudinary.uploader.destroy(public_id)
+            # If a folder_name is provided, ensure public_id matches the folder structure
+            if folder_name:
+                # Folder name should be part of the public_id, so prepend it if necessary
+                public_id = f"{folder_name}/{public_id}" if not public_id.startswith(folder_name) else public_id
+
+            # Delete the image using its public_id
+            print(f"Deleting image with public ID: {public_id}")
+            response = cloudinary.uploader.destroy(public_id)
+
+            # Log the result of the deletion
+            if response.get('result') == 'ok':
+                print(f"Successfully deleted image with public ID: {public_id}")
+            else:
+                print(f"Failed to delete image with public ID: {public_id}")
             return response
         except cloudinary.exceptions.Error as e:
             print(f"Error deleting image: {e}")
+            return None
+        
+    def delete_folder(self, folder_name):
+        """
+        Delete a folder and its contents from Cloudinary.
+        :param folder_name: The folder name to delete.
+        :return: Cloudinary deletion response.
+        """
+        try:
+            response = delete_resources_by_prefix(folder_name)
+            return response
+        except cloudinary.exceptions.Error as e:
+            print(f"Error deleting folder: {e}")
             return None

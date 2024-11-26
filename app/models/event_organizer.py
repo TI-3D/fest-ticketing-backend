@@ -23,6 +23,8 @@ class EventOrganizer(SQLModel, table=True):
     status: OrganizerStatus = Field(default=OrganizerStatus.PENDING)
     user_id: UUID = Field(foreign_key="users.user_id")
     verified_at: datetime = Field(default=None)
+    
+    profile_picture: str = Field(default=None, nullable=True)
 
     # Foreign Keys
     code_province: str = Field(foreign_key="provinces.code_province")  # FK ke provinces

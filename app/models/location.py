@@ -10,6 +10,7 @@ class Province(SQLModel, table=True):
     cities: List["City"] = Relationship(back_populates="province")
     organizers: List["EventOrganizer"] = Relationship(back_populates="province")
     events: List["Event"] = Relationship(back_populates="province") 
+    users: List["User"] = Relationship(back_populates="province")  # back_populates should match 'province' in User
     
     def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
         data = super().model_dump(*args, **kwargs)  # Use dict() as an alternative for serialization
@@ -37,6 +38,7 @@ class City(SQLModel, table=True):
     districts: List["District"] = Relationship(back_populates="city")
     organizers: List["EventOrganizer"] = Relationship(back_populates="city")
     events: List["Event"] = Relationship(back_populates="city")  # back_populates should match 'city' in Event
+    users: List["User"] = Relationship(back_populates="city")  # back_populates should match 'city' in User
     
     def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
         data = super().model_dump(*args, **kwargs)  # Use dict() as an alternative for serialization
@@ -64,6 +66,7 @@ class District(SQLModel, table=True):
     villages: List["Village"] = Relationship(back_populates="district")
     organizers: List["EventOrganizer"] = Relationship(back_populates="district")
     events: List["Event"] = Relationship(back_populates="district")  # back_populates should match 'district' in Event
+    users: List["User"] = Relationship(back_populates="district")  # back_populates should match 'district' in User
     
     def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
         data = super().model_dump(*args, **kwargs)  # Use dict() as an alternative for serialization
@@ -90,6 +93,7 @@ class Village(SQLModel, table=True):
     district: District = Relationship(back_populates="villages")
     organizers: List["EventOrganizer"] = Relationship(back_populates="village")
     events: List["Event"] = Relationship(back_populates="village")  # back_populates should match 'village' in Event
+    users: List["User"] = Relationship(back_populates="village")  # back_populates should match 'village' in User
     
     def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
         data = super().model_dump(*args, **kwargs)  # Use dict() as an alternative for serialization

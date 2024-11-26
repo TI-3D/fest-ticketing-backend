@@ -48,6 +48,19 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.now, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.now, nullable=False, sa_column_kwargs={"onupdate": datetime.now})
     
+    # Foreign Keys
+    code_province: str = Field(foreign_key="provinces.code_province", nullable=True)  # FK ke provinces
+    code_city: str = Field(foreign_key="cities.code_city", nullable=True)  # FK ke cities
+    code_district: str = Field(foreign_key="districts.code_district", nullable=True) # FK ke districts
+    code_village: str = Field(foreign_key="villages.code_village", nullable=True)  # FK ke villages
+
+    # Relationships
+    province: "Province" = Relationship(back_populates="users")
+    city: "City" = Relationship(back_populates="users")
+    district: "District" = Relationship(back_populates="users")
+    village: "Village" = Relationship(back_populates="users")
+    
+    
     # Relasi ke model Provider (One-to-Many)
     providers: List["Provider"] = Relationship(back_populates="user")
     otp: List["OTP"] = Relationship(back_populates="user")
