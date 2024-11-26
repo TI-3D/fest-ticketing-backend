@@ -1,14 +1,13 @@
 version: '3.8'
 
-services:
-  fastapi:
+fastapi:
     build:
       context: .
     container_name: fastapi
     depends_on:
-      - postgres
+    - postgres
     ports:
-      - "80:80"
+      - "8080:8080"
     networks:
       - app-network
 

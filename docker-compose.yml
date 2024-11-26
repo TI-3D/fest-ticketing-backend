@@ -15,23 +15,6 @@ services:
     networks:
       - app-network
 
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
-      PGADMIN_LISTEN_PORT: 5050
-    restart: always
-    ports:
-      - "5050:5050"
-    volumes:
-      - ./docker/pgadmin/server.json:/pgadmin4/servers.json
-    depends_on:
-      - postgres
-    networks:
-      - app-network
-
   fastapi:
     build:
       context: .
