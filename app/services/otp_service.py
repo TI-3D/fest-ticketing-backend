@@ -8,7 +8,7 @@ from app.services.mail_service import MailService
 from datetime import datetime, timedelta, timezone
 from app.schemas.otp import VerifyOtpRequest
 import random
-
+from uuid import UUID
 class OTPService:
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -28,9 +28,8 @@ class OTPService:
                 raise HTTPException(status_code=404, detail="User not found")
             await self.delete_expired_otps()  # Delete expired OTPs
             otp_code = self.generate_otp()  # Generate OTP
-            expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)  # OTP expiration time
-            hashed_otp = create_jwt_token({"user_id": user_id, "otp": otp_code}, expires_at=expires_at)  # Generate hashed OTP
-            otp = OTP(user_id=user_id, otp_code=otp_code, hashed_otp=hashed_otp, created_at=datetime.now(timezone.utc), expires_at=expires_at)
+            hashed_otp = create_jwt_token({"user_id": user_id }, expires_in=timedelta(minutes=5))  # Hash OTP
+            otp = OTP(user_id=user_id, otp_code=otp_code, hashed_otp=hashed_otp, created_at=datetime.now(timezone.utc), expires_at=datetime.now(timezone.utc) + timedelta(minutes=5))
 
             # No transaction handling here, let the service handle that
             await self.otp_repository.upsert(otp)
@@ -44,7 +43,7 @@ class OTPService:
         """Verifies the OTP for the given user."""
         try:
             data = verify_jwt_token(request.hash)
-            
+            print("Data     ",data)
             if not data:
                 raise HTTPException(status_code=400, detail="Invalid OTP")
             
@@ -53,14 +52,14 @@ class OTPService:
             
             if not otp:
                 raise HTTPException(status_code=400, detail="Invalid OTP")
-            
-            if otp.expires_at < datetime.now(timezone.utc):
+            print(otp.expires_at.replace(tzinfo=None), datetime.now(timezone.utc))
+            if otp.expires_at.replace(tzinfo=None) < datetime.now():
                 raise HTTPException(status_code=400, detail="OTP has expired")
             
-            if otp.user_id != user_id:
+            if otp.user_id != UUID(user_id):
                 raise HTTPException(status_code=400, detail="Invalid OTP")
             
-            if otp.otp_code == request.otp:
+            if otp.otp_code.strip() == request.otp.strip():
                 print(otp)
                 await self.otp_repository.delete_user_otps(user_id)
                 return True

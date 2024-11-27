@@ -8,17 +8,10 @@ class Role(Enum):
     ADMIN = "Admin"
     USER = "User"
     EO = "Event Organizer"
-    
-    def __str__(self):
-        return self.value
 
 class Gender(Enum):
     MALE = "Male"
     FEMALE = "Female"
-    
-    def __str__(self):
-        return self.value
-
 
 class User(SQLModel, table=True):
     __tablename__ = 'users'
@@ -59,18 +52,3 @@ class User(SQLModel, table=True):
     personal_access_tokens: List["PersonalAccessToken"] = Relationship(back_populates="user")
     # One-to-One Relationship
     organizer: Optional["EventOrganizer"] = Relationship(back_populates="user")
-    
-    def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
-        data = super().model_dump(*args, **kwargs)  # Use dict() as an alternative for serialization
-        # Convert datetime fields to string
-        for field, value in data.items():
-            if isinstance(value, datetime):
-                # Convert datetime to ISO 8601 string format
-                data[field] = value.isoformat()
-            elif isinstance(value, Enum):
-                # Convert Enum to string
-                data[field] = str(value)
-            elif isinstance(value, UUID):
-                # Convert UUID to string
-                data[field] = str(value)
-        return data

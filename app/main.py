@@ -58,7 +58,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return JSONResponse(
         status_code=422,
         content=ResponseError(
-            message=f"Validation Error: {msg.split(',')[1].strip()}",
+            message=f"Validation Error: {msg}",
             errors=get_error_details(exc)
         ).model_dump()
     )

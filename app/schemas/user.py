@@ -1,114 +1,63 @@
 from uuid import UUID
-from datetime import date, datetime
+from datetime import datetime
 from typing import Optional
-from enum import Enum
 from pydantic import BaseModel, EmailStr, field_validator
-from app.models.user import Gender, Role, UserStatus
-
-class UserCreate(BaseModel):
+from app.models import Gender, Role
+from datetime import datetime
+class UserBase(BaseModel):
+    user_id: str
     full_name: str
     email: EmailStr
-    gender: Optional[Gender]
-    birth_date: Optional[date]
-    phone_number: Optional[str]
-    NIK: Optional[str]
-    address: Optional[str]
-    role: Role = Role.USER
-    status: UserStatus = UserStatus.BASIC
+    gender: Optional[str] = None
+    birth_date: str
+    phone_number: str
+    nik: str
+    address: str
+    role: str
+    profile_picture: Optional[str] = None
+    code_province: str
+    code_city: str
+    code_district: str
+    code_village: str
+    created_at: str
+    updated_at: str
+    
+    @field_validator("gender", mode="before")
+    def validate_gender(cls, v):
+        if isinstance(v, Gender):
+            return str(v)
+        return v
+    
+    @field_validator("role", mode="before")
+    def validate_role(cls, v):
+        if isinstance(v, Role):
+            return str(v)
+        return v
+    
+    @field_validator("user_id", mode="before")
+    def validate_user_id(cls, v):
+        if isinstance(v, UUID):
+            return str(v)
+        return v
 
-    @field_validator('full_name')
-    def validate_full_name(cls, value):
-        if not value.strip():
-            raise ValueError('Full name cannot be empty')
-        if len(value) > 255:
-            raise ValueError('Full name must be less than 255 characters')
-        if not value.replace(' ', '').isalpha():
-            raise ValueError('Full name must contain only alphabetic characters')
-        return value
-
-    @field_validator('phone_number')
-    def validate_phone_number(cls, value):
-        if value and not value.isdigit():
-            raise ValueError('Phone number must contain only digits')
-        if value and len(value) > 16:
-            raise ValueError('Phone number must be less than 16 characters')
-        if value and len(value) < 10:
-            raise ValueError('Phone number must be at least 10 characters')
-        if value and not value.startswith('08'):
-            raise ValueError('Phone number must start with +62')
-        return value
-
-    @field_validator('NIK')
-    def validate_nik(cls, value):
-        if value and not value.isdigit():
-            raise ValueError('NIK must contain only digits')
-        if value and len(value) != 16:
-            raise ValueError('NIK must be 16 characters')
-        return value
-
-    @field_validator('address')
-    def validate_address(cls, value):
-        if value and len(value) > 100:
-            raise ValueError('Address must be less than 100 characters')
-        return value
-
-class UserRead(BaseModel):
-    user_id: UUID
-    full_name: str
-    email: EmailStr
-    gender: Optional[Gender]
-    birth_date: Optional[date]
-    phone_number: Optional[str]
-    NIK: Optional[str]
-    address: Optional[str]
-    role: Role
-    status: UserStatus
-    created_at: datetime
-    updated_at: datetime
+    @field_validator("birth_date", "created_at", "updated_at", mode="before")
+    def validate_datetime_fields(cls, v):
+        if isinstance(v, datetime):
+            return v.isoformat()  
+        return v
+    
+    class Config:
+        from_attributes = True
 
 class UserUpdate(BaseModel):
-    full_name: Optional[str]
-    email: Optional[EmailStr]
-    gender: Optional[Gender]
-    birth_date: Optional[date]
-    phone_number: Optional[str]
-    NIK: Optional[str]
-    address: Optional[str]
-    role: Optional[Role]    
-    status: Optional[UserStatus]
-
-    @field_validator('full_name')
-    def validate_full_name(cls, value):
-        if not value.strip():
-            raise ValueError('Full name cannot be empty')
-        if len(value) > 255:
-            raise ValueError('Full name must be less than 255 characters')
-        if not value.replace(' ', '').isalpha():
-            raise ValueError('Full name must contain only alphabetic characters')
-        return value
-
-    @field_validator('phone_number')
-    def validate_phone_number(cls, value):
-        if value and not value.isdigit():
-            raise ValueError('Phone number must contain only digits')
-        if value and len(value) > 16:
-            raise ValueError('Phone number must be less than 16 characters')
-        if value and len(value) < 10:
-            raise ValueError('Phone number must be at least 10 characters')
-        if value and not value.startswith('08'):
-            raise ValueError('Phone number must start with +62')
-        return value
-
-    @field_validator('NIK')
-    def validate_nik(cls, value):
-        if value and not value.isdigit():
-            raise ValueError('NIK must contain only digits')
-        if value and len(value) != 16:
-            raise ValueError('NIK must be 16 characters')
-        return value
-
-    @field_validator('address')
-    def validate_address(cls, value):
-        if value and len(value) > 100:
-            raise ValueError('Address must be less than 100 characters')
-        return value
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    gender: Optional[str] = None
+    birth_date: Optional[str] = None
+    phone_number: Optional[str] = None
+    nik: Optional[str] = None
+    address: Optional[str] = None
+    profile_picture: Optional[str] = None
+    
+    class Config:
+        from_attributes = True

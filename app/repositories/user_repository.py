@@ -22,7 +22,20 @@ class UserRepository:
         except Exception as e:
             self.logger.error(f"Error creating user with email {user.email}: {str(e)}")
             raise HTTPException(status_code=400, detail="Error creating user")
-
+    async def get_user_by_nik(self, nik: str) -> Optional[User]:
+        try:
+            self.logger.info(f"Attempting to retrieve user by nik: {nik}")
+            result = await self.session.execute(select(User).where(User.nik == nik))
+            user = result.scalars().first()
+            if not user:
+                self.logger.warning(f"User not found with nik: {nik}")
+                return None
+            self.logger.info(f"User found with nik: {nik}")
+            return user
+        except Exception as e:
+            self.logger.error(f"Error retrieving user by nik {nik}: {str(e)}")
+            raise HTTPException(status_code=400, detail="Error retrieving user by nik")
+        
     async def get_user_by_email(self, email: str) -> Optional[User]:
         try:
             self.logger.info(f"Attempting to retrieve user by email: {email}")
