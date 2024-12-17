@@ -69,7 +69,22 @@ class CloudinaryService:
 
         # Generate the URL
         return cloudinary.utils.cloudinary_url(public_id, **options, secure=True)
-
+    
+    def delete_image_by_url(self, url, folder_name=None):
+        """
+        Delete an image from Cloudinary using the URL.
+        :param url: The Cloudinary URL of the image.
+        :param folder_name: The folder where the image is stored (optional).
+        :return: Cloudinary deletion response.
+        """
+        try:
+            # Extract the public ID from the URL
+            public_id = url.split("/")[-1].split(".")[0]
+            return self.delete_image(public_id, folder_name)
+        except cloudinary.exceptions.Error as e:
+            print(f"Error deleting image: {e}")
+            return None
+    
     def delete_image(self, public_id, folder_name=None):
         """
         Delete an image from Cloudinary using the public ID.

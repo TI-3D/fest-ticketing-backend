@@ -3,17 +3,11 @@ from sqlalchemy.orm import Session
 
 def create_event_categories(session: Session):
     list_event_categories = [
-        "Music",
-        "Comedy",
-        "Business",
-        "Health", 
-        "Festivals",
-        "Entrepreneurship", 
-        "Technology", 
-        "Community", 
-        "Networking", 
-        "Fashion", 
-        "Education",
+        "Concerts",
+        "Seminars",
+        "Workshops",
+        "Exhibitions", 
+        "Festivals", 
     ]
 
     

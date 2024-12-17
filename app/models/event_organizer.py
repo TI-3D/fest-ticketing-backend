@@ -23,23 +23,20 @@ class EventOrganizer(SQLModel, table=True):
     profile_picture: str = Field(default=None, nullable=True)
     company_name: str
     company_address: str
+    company_pic: str
+    company_email: str
+    company_phone: str
+    company_experience: str
+    company_portofolio: str
     status: OrganizerStatus = Field(default=OrganizerStatus.PENDING)
-    address: str = Field(nullable=False)
     user_id: UUID = Field(foreign_key="users.user_id")
-    verified_at: datetime = Field(default=None)
-    # Foreign Keys
-    code_province: str = Field(foreign_key="provinces.code_province")
-    code_city: str = Field(foreign_key="cities.code_city")
-    code_district: str = Field(foreign_key="districts.code_district")
-    code_village: str = Field(foreign_key="villages.code_village")
+    verified_at: datetime = Field(default=None, nullable=True)
+    # # Foreign Keys
+    
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.now, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.now, nullable=False, sa_column_kwargs={"onupdate": datetime.now})
 
-    # Relationships
-    province: "Province" = Relationship(back_populates="organizers")
-    city: "City" = Relationship(back_populates="organizers")
-    district: "District" = Relationship(back_populates="organizers")
-    village: "Village" = Relationship(back_populates="organizers")
+    # # Relationships
     user: "User" = Relationship(back_populates="organizer")
     events: List["Event"] = Relationship(back_populates="organizer")

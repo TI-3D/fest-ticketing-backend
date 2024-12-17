@@ -12,21 +12,20 @@ class OTPRepository:
         self.logger = Logger(__name__).get_logger()  # Initialize the logger
         
     async def upsert(self, otp: OTP) -> OTP:
+        """Insert or update an OTP record."""
         try:
             self.logger.info(f"Attempting to upsert OTP for user_id: {otp.user_id}")
 
             # Check if OTP already exists for the user_id
-            result = await self.session.execute(select(OTP).where(OTP.user_id == otp.user_id))
-            existing_otp = result.scalars().first()
+            existing_otp = await self.session.execute(select(OTP).where(OTP.user_id == otp.user_id))
+            existing_otp = existing_otp.scalars().first()
 
             if existing_otp:
-                # If OTP exists, update the existing record
                 self.logger.info(f"Updating OTP for user_id: {otp.user_id}")
                 existing_otp.otp_code = otp.otp_code
                 existing_otp.hashed_otp = otp.hashed_otp
                 existing_otp.created_at = otp.created_at
-                existing_otp.expires_at = otp.expires_at
-                # Optionally, update other fields here
+                existing_otp.expires_in = otp.expires_in  # Make sure expires_in is updated
             else:
                 # If OTP does not exist, create a new record
                 self.logger.info(f"Creating new OTP for user_id: {otp.user_id}")
@@ -43,62 +42,43 @@ class OTPRepository:
             await self.session.rollback()
             raise
         
-    async def get_otp_by_code(self, otp_code: str) -> Optional[OTP]:
-        try:
-            self.logger.info(f"Attempting to retrieve OTP by code: {otp_code}")
-            result = await self.session.execute(select(OTP).where(OTP.otp_code == otp_code))
-            otp = result.scalars().first()
-            if not otp:
-                self.logger.warning(f"OTP not found with code: {otp_code}")
-                return None  # Return None instead of raising an exception
-            self.logger.info(f"OTP found with code: {otp_code}")
-            return otp
-        except Exception as e:
-            self.logger.error(f"Error retrieving OTP by code: {str(e)}")
-            raise
+    async def get_otp_by_user_id(self, user_id: int) -> Optional[OTP]:
+        """Retrieve OTP by user_id."""
+        self.logger.info(f"Attempting to get OTP by user_id: {user_id}")
+        result = await self.session.execute(select(OTP).where(OTP.user_id == user_id))
+        return result.scalars().first()
+        
         
     async def get_otp_by_hashed_otp(self, hashed_otp: str) -> Optional[OTP]:
-        try:
-            self.logger.info(f"Attempting to retrieve OTP by hashed OTP: {hashed_otp}")
-            result = await self.session.execute(select(OTP).where(OTP.hashed_otp == hashed_otp))
-            otp = result.scalars().first()
-            if not otp:
-                self.logger.warning(f"OTP not found with hashed OTP: {hashed_otp}")
-                return None  # Return None instead of raising an exception
-            self.logger.info(f"OTP found with hashed OTP: {hashed_otp}")
-            return otp
-        except Exception as e:
-            self.logger.error(f"Error retrieving OTP by hashed OTP: {str(e)}")
-            raise    
+        """Retrieve OTP by hashed value."""
+        self.logger.info(f"Attempting to get OTP by hashed_otp: {hashed_otp}")
+        result = await self.session.execute(select(OTP).where(OTP.hashed_otp == hashed_otp))
+        return result.scalars().first()
     
-    async def create(self, otp: OTP) -> OTP:
-        try:
-            self.logger.info(f"Attempting to create OTP for user_id: {otp.user_id}")
-            self.session.add(otp)  # Add the OTP object to the session
-            self.logger.info(f"OTP for user_id {otp.user_id} created successfully.")
-            return otp
-        except Exception as e:
-            self.logger.error(f"Error creating OTP: {str(e)}")
-            raise
-
+    
     async def delete_expired_otps(self) -> bool:
         try:
             self.logger.info("Attempting to delete expired OTPs")
-            stmt = delete(OTP).where(OTP.expires_at < datetime.now(timezone.utc))
+            stmt = delete(OTP).where((OTP.created_at + OTP.expires_in) < datetime.now(timezone.utc))
             result = await self.session.execute(stmt)
+            await self.session.commit()
             self.logger.info(f"Deleted {result.rowcount} expired OTPs")
             return True
         except Exception as e:
             self.logger.error(f"Unexpected error deleting expired OTPs: {str(e)}")
+            await self.session.rollback()
             raise
         
     async def delete_user_otps(self, user_id: int) -> bool:
+        """Deletes OTPs for a given user."""
         try:
             self.logger.info(f"Attempting to delete OTPs for user_id: {user_id}")
             stmt = delete(OTP).where(OTP.user_id == user_id)
             result = await self.session.execute(stmt)
+            await self.session.commit()
             self.logger.info(f"Deleted {result.rowcount} OTPs for user_id: {user_id}")
             return True
         except Exception as e:
-            self.logger.error(f"Unexpected error deleting OTPs for user_id {user_id}: {str(e)}")
+            self.logger.error(f"Unexpected error deleting OTPs for user_id: {user_id}: {str(e)}")
+            await self.session.rollback()
             raise

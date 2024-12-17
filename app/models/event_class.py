@@ -1,13 +1,10 @@
 from sqlmodel import Field, SQLModel, Relationship
 from uuid import UUID, uuid4
 from decimal import Decimal
-from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional, List
 
-
-# Event Class Model
 class EventClass(SQLModel, table=True):
-    __tablename__ = "event_class"
+    __tablename__ = "event_classes"  # Pastikan nama tabel sesuai
 
     event_class_id: UUID = Field(default_factory=uuid4, primary_key=True)
     event_id: UUID = Field(foreign_key="events.event_id")
@@ -18,3 +15,4 @@ class EventClass(SQLModel, table=True):
 
     # Relationship to Event
     event: "Event" = Relationship(back_populates="event_classes")
+    payments: List["Payment"] = Relationship(back_populates="event_class")  # Relasi ke Payment

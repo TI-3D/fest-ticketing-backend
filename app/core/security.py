@@ -4,6 +4,9 @@ from jose import JWTError, jwt, ExpiredSignatureError
 from passlib.context import CryptContext
 from passlib.exc import UnknownHashError
 from app.core.config import settings, logger
+from app.schemas.auth import TokenClaim
+import pyotp
+
 # Set up password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -31,11 +34,17 @@ def generate_password_hash(password: str) -> str:
 
         
 # Function untuk meng-generate token JWT
-def create_jwt_token(data: dict, expires_in: timedelta = None) -> str:
+def create_jwt_token(data: TokenClaim | dict[str, str], expires_in: timedelta = None) -> str:
     """
     Membuat token JWT dengan data payload dan waktu kadaluarsa opsional.
     """
-    to_encode = {key: str(value) for key, value in data.items()}
+    # Mengonversi data ke dict
+    # to_encode = data.model_dump()
+    
+    if isinstance(data, TokenClaim):
+        to_encode = data.model_dump()
+    else:
+        to_encode = data
     
     if expires_in:
         expire = datetime.now(timezone.utc) + expires_in  # Gunakan waktu UTC
@@ -78,3 +87,30 @@ def verify_jwt_token(token: str) -> dict:
     except Exception as e:
         logger.error(f"Unexpected error verifying JWT token: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+    
+def generate_otp_secret() -> str:
+    """Generate a random OTP secret."""
+    totp = pyotp.random_base32()
+    return totp
+
+def verify_otp(otp_code: str, secret: str, created_at: datetime, expires_in: int) -> bool:
+    """Verify OTP for specific verification type"""
+
+    # Jika `created_at` tidak memiliki zona waktu, beri zona waktu UTC
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
+    
+    expires_at = created_at + timedelta(seconds=expires_in)
+    
+    # Membandingkan datetime offset-aware
+    if datetime.now(timezone.utc) > expires_at:
+        raise HTTPException(status_code=400, detail="OTP expired")
+    
+    totp = pyotp.TOTP(secret)
+    is_valid = totp.verify(otp_code)
+    print("is_valid", is_valid)
+    
+    if not is_valid:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+    
+    return True

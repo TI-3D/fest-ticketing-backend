@@ -1,10 +1,11 @@
 from app.core.config import settings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from seed.seeders.user_seeder import create_user_admin, create_user_test, create_users, create_event_organizer, create_event_organizer_test, delete_all_users
-from seed.seeders.event_category_seeder import create_event_categories, delete_all_event_categories
-from seed.seeders.location_seeder import generate_location_data, delete_all_locations
-from seed.seeders.event_seeder import create_events, delete_all_events
+from seed.seeders.user_seeder import create_user_admin, create_user_test, create_users, create_event_organizer, create_event_organizer_test
+from seed.seeders.event_category_seeder import create_event_categories
+from seed.seeders.event_seeder import create_events
+from seed.delete import delete_all
+from seed.seeders.payment_seeder import create_payments
 # Initialize the database engine with settings from config
 engine = create_engine(settings.SQLALCHEMY_DATABASE_URI, pool_pre_ping=True, echo=True)
 
@@ -19,9 +20,6 @@ def seed_db():
     try:
         delete_all()  # Delete all data from the database before seeding
         
-        # Location seeder
-        generate_location_data(db)
-        
         # User seeders
         create_user_admin(db)
         create_user_test(db)
@@ -34,23 +32,11 @@ def seed_db():
         
         # Event seeder
         create_events(db, 10)  # Create 10 random events
+        create_payments(db, 10)  # Create 10 random 
     finally:
         db.close()  # Close the session after seeding
         print("Seeding complete.")  # Indicate completion of the seeding process
 
-def delete_all():
-    """
-    Deletes all data from the database.
-    """
-    db = SessionLocal()  # Open a new database session
-    try:
-        delete_all_events(db)
-        delete_all_users(db)
-        delete_all_locations(db)
-        delete_all_event_categories(db)
-    finally:
-        db.close()  # Close the session after deletion
-        print("Deletion complete.")  # Indicate completion of the deletion process
 if __name__ == "__main__":
     # Execute the seeding process when the script is run directly
     seed_db()

@@ -10,6 +10,7 @@ class VerifyOtpRequest(BaseModel):
     hash: str
     email: EmailStr
     otp: str
+    device_id: Optional[str] = None
     
 class VerifyOtpResponse(ResponseModel):
     pass

@@ -1,15 +1,13 @@
 from app.models.user import User, Role, Gender
 from app.models.personal_access_token import PersonalAccessToken
-from app.models.otp import OTP
+from app.models.otp import OTP, VerificationType
 from app.models.provider import Provider, ProviderName
 from app.models.event import Event, EventStatus
 from app.models.event_category import EventCategories
 from app.models.event_class import EventClass
 from app.models.event_organizer import EventOrganizer, OrganizerStatus
 from app.models.event_category_association import EventCategoryAssociation
-from app.models.location import Province, City, District, Village
-from app.models.schedules import Schedule, DayOfWeek
-from app.models.event_image import EventImage
+from app.models.payment import Payment, PaymentMethodType, PaymentStatus
 
 __all__ = [
     "User",
@@ -17,6 +15,7 @@ __all__ = [
     "Gender",
     "Provider",
     "OTP",
+    "VerificationType",
     "ProviderName",
     "PersonalAccessToken",
     "Event",
@@ -26,11 +25,7 @@ __all__ = [
     "OrganizerStatus",
     "EventStatus",
     "EventCategoryAssociation",
-    "Province",
-    "City",
-    "District",
-    "Village",
-    "Schedule",
-    "EventImage",
-    "DayOfWeek"
+    "Payment",
+    "PaymentMethodType",
+    "PaymentStatus",
 ]

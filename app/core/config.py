@@ -78,6 +78,11 @@ class Settings(BaseSettings):
         
         
         "/api/v1/location/provinces",
+        
+        "/api/v1/organizer",
+        
+        "/api/v1/event",
+        "/api/v1/event/categories",
         ]
     
     class Config:

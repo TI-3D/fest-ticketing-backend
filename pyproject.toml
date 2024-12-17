@@ -28,6 +28,12 @@ dependencies = [
     "asyncpg>=0.30.0",
     "cloudinary>=1.41.0",
     "psycopg[binary,pool]>=3.2.3",
+    "pyotp>=2.9.0",
+    "keras-facenet>=0.3.2",
+    "mediapipe>=0.10.18",
+    "tensorflow>=2.18.0",
+    "scikit-learn>=1.5.2",
+    "apscheduler>=3.11.0",
 ]
 
 [tool.uv]

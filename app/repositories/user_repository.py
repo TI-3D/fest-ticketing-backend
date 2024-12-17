@@ -1,10 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, delete
-from app.models import User
+from app.models import User, Role
 from app.core.config import Logger
 from typing import Optional
+from datetime import datetime, timezone
 from fastapi import HTTPException  # Import HTTPException from FastAPI
+import json
 
 class UserRepository:
     def __init__(self, session: AsyncSession):
@@ -69,14 +71,49 @@ class UserRepository:
             self.logger.info(f"Attempting to update user with id: {user_id}")
             stmt = update(User).where(User.user_id == user_id).values(**updates)
             result = await self.session.execute(stmt)
+
+            # Check if the update was successful
             if result.rowcount == 0:
                 self.logger.warning(f"User with id {user_id} not found for update.")
                 raise HTTPException(status_code=400, detail=f"User with id {user_id} not found for update.")
+
+            # Fetch the updated user from the database
+            updated_user = await self.get_user_by_id(user_id)
             self.logger.info(f"User with id {user_id} updated successfully.")
-            return await self.get_user_by_id(user_id)  # Return the updated user
+            return updated_user
+
         except Exception as e:
             self.logger.error(f"Unexpected error updating user with id {user_id}: {str(e)}")
             raise HTTPException(status_code=400, detail="Error updating user")
+        
+    async def update_user_role(self, user_id: int, role: Role) -> User:
+        try:
+            self.logger.info(f"Attempting to update role for user with id: {user_id}")
+            stmt = update(User).where(User.user_id == user_id).values(role=role)
+            result = await self.session.execute(stmt)
+            if result.rowcount == 0:
+                self.logger.warning(f"User with id {user_id} not found for role update.")
+                raise HTTPException(status_code=400, detail=f"User with id {user_id} not found for role update.")
+            self.logger.info(f"Role for user with id {user_id} updated successfully.")
+            return await self.get_user_by_id(user_id)  # Return the updated user
+        except Exception as e:
+            self.logger.error(f"Unexpected error updating role for user with id {user_id}: {str(e)}")
+            raise HTTPException(status_code=400, detail="Error updating role for user")
+        
+    async def mark_email_verified(self, user_id: str) -> User:
+        try:
+            self.logger.info(f"Attempting to mark user with id {user_id} as verified")
+            stmt = update(User).where(User.user_id == user_id).values(email_verified_at=datetime.now(timezone.utc))
+            result = await self.session.execute(stmt)
+            if result.rowcount == 0:
+                self.logger.warning(f"User with id {user_id} not found for verification.")
+                raise HTTPException(status_code=400, detail=f"User with id {user_id} not found for verification.")
+            self.logger.info(f"User with id {user_id} marked as verified successfully.")
+            return await self.get_user_by_id(user_id)  # Return the updated user
+        except Exception as e:
+            self.logger.error(f"Unexpected error marking user with id {user_id} as verified: {str(e)}")
+            raise HTTPException(status_code=400, detail="Error marking user as verified")
+        
 
     async def delete(self, user_id: int) -> bool:
         try:
@@ -91,3 +128,29 @@ class UserRepository:
         except Exception as e:
             self.logger.error(f"Unexpected error deleting user with id {user_id}: {str(e)}")
             raise HTTPException(status_code=400, detail="Error deleting user")
+        
+    async def save_or_update_embedding(self, user_id: str, embedding: list):
+        user = await self.get_user_by_id(user_id)
+        embedding_json = json.dumps(embedding)
+
+        if user:
+            # Update existing user embedding
+            user.embedding = embedding_json
+            self.session.add(user)
+        else:
+            # Create a new user if not exists
+            new_user = User(user_id=user_id, embedding=embedding_json)
+            self.session.add(new_user)
+
+        await self.session.commit()
+        
+    async def get_embedding_by_user_id(self, user_id: str) -> Optional[list]:
+        user = await self.get_user_by_id(user_id)
+        if user:
+            return json.loads(user.embedding)
+        return None
+    
+    async def get_all_embeddings(self) -> list:
+        
+        result = await self.session.execute(select(User))
+        return result.scalars().all()
